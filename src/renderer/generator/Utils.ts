@@ -45,4 +45,5 @@ export function getBoundInjectables(fileLines: string[], importMap: ImportMap): 
       };
     }
     return null;
+  });
 }
