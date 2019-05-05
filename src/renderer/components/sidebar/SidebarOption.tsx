@@ -3,7 +3,7 @@ import React from 'react';
 interface IProps {
   id: string;
   title: string;
-  onClick: (id: string) => void;
+  onClick: () => void;
   isSelected?: boolean;
 }
 
@@ -12,13 +12,10 @@ export class SidebarOption extends React.Component<IProps> {
     const { title, isSelected } = this.props;
     const className = isSelected ? 'sidebar-option selected' : 'sidebar-option';
     return (
-      <span className={className} onClick={this.handleClick}>
+      <span className={className} onClick={this.props.onClick}>
+        <div className="selection-mark" />
         {title}
       </span>
     );
   }
-
-  private handleClick = () => {
-    this.props.onClick(this.props.id);
-  };
 }

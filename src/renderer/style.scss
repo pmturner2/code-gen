@@ -62,28 +62,44 @@
 
 .sidebar-option {
   cursor: pointer;
+  display: flex;
   flex: 1;
+  flex-direction: row;
   font-weight: 100;
   line-height: 40px;
   max-height: 40px;
-  padding-left: 20px;
-  transition: 0.5s;
+  overflow: hidden;
   vertical-align: middle;
 }
 
 .sidebar-option:hover {
   color: #fff;
+  transition: color 0.5s;
 }
 
 .sidebar-option.selected {
-  border-left: 3px solid rgb(125, 210, 101);
+  // border-left: 3px solid rgb(125, 210, 101);
   font-weight: 700;
   color: #fff;
-  transition: 0s;
+  transition: color font-weight 0s;
 }
 
 .sidebar-option-title {
   border: solid 1px white;
+}
+
+.sidebar-option .selection-mark {
+  height: 100%;
+  width: 3px;
+  margin-right: 20px;
+  transition: transform 0.3s;
+  transform: translateY(-40px);
+}
+
+.sidebar-option.selected .selection-mark {
+  background-color: rgb(125, 210, 101);
+  transition: transform 0.3s;
+  transform: translateY(0px);
 }
 
 ul {
