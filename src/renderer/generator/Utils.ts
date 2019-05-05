@@ -3,7 +3,7 @@ import { ImportMap } from '../ImportMap';
 
 /**
  *
- * @param fileLines lines of the .ts file, assumed to be separated by `;`
+ * @param fileLines lines of the .ts file, assumed to be grouped as valid statements
  *
  * @returns Map of each imported item to its file path.
  */
@@ -34,16 +34,19 @@ export function getImportMapFromFileBody(fileBody: string): ImportMap {
 export function getBoundInjectables(fileLines: string[], importMap: ImportMap): IInjectable[] {
   // Lines binding a Service. Use this to build our list of valid services.
   const bindLines = fileLines.filter((l: string) => l.startsWith('bind'));
-  return bindLines.map((line: string) => {
-    const tokens = line.split(/bind|[<>;\)\( ,]/g).filter((token: string) => !!token);
-    if (tokens.length === 3) {
-      return {
-        importPath: importMap.get(tokens[0]) || 'UNKNOWN',
-        interfaceName: tokens[0],
-        name: tokens[1],
-        serviceIdentifier: tokens[2],
-      };
-    }
-    return null;
-  });
+  const result = bindLines
+    .map((line: string) => {
+      const tokens = line.split(/bind|[<>;\)\( ,]/g).filter((token: string) => !!token);
+      if (tokens.length === 3) {
+        return {
+          importPath: importMap.get(tokens[0]) || 'UNKNOWN',
+          interfaceName: tokens[0],
+          name: tokens[1],
+          serviceIdentifier: tokens[2],
+        };
+      }
+      return null;
+    })
+    .sort((a: IInjectable, b: IInjectable) => (a.serviceIdentifier < b.serviceIdentifier ? -1 : 1));
+  return result;
 }

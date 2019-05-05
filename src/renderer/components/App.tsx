@@ -1,19 +1,30 @@
 import * as React from 'react';
-import { getServices } from '../generator/ServiceHelper';
-// import console = require('console');
+import { IInjectable } from '../IInjectable';
+import { MainContent } from './MainContent';
+import { ServiceCreateForm } from './ServiceCreateForm';
+import { Sidebar } from './Sidebar';
 
-export class App extends React.Component {
+interface IState {
+  services: IInjectable[];
+}
+
+export class App extends React.Component<{}, IState> {
+  state = {
+    services: new Array<IInjectable>(),
+  };
+
+  componentDidCatch?(error: Error, errorInfo: React.ErrorInfo): void {
+    console.log(error, errorInfo);
+  }
+
   render() {
     return (
-      <div>
-        <h4>WWF Code Gen</h4>
-        <button onClick={this.printServices}>Test</button>
+      <div className="app-root">
+        <Sidebar />
+        <MainContent>
+          <ServiceCreateForm />
+        </MainContent>
       </div>
     );
   }
-
-  printServices = async () => {
-    const services = await getServices();
-    console.log(JSON.stringify(services));
-  };
 }
