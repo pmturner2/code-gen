@@ -5,3 +5,9 @@ export interface IInjectable {
   serviceIdentifier: string; // e.g. ServiceTypes.Game
   importPath: string; // e.g. 'services/game/GameService.ts'
 }
+
+export type ImportMap = Map<string, string>;
+
+export interface INewInjectable extends IInjectable {
+  dependencies: IInjectable[];
+}

@@ -1,6 +1,6 @@
 const { promisify } = require('util');
 import fs from 'fs';
-import { IInjectable } from '../IInjectable';
+import { IInjectable } from '../Types';
 import { getBoundInjectables, getImportMap } from './Utils';
 const readFileAsync = promisify(fs.readFile);
 // const writeFileAsync = promisify(fs.writeFile);

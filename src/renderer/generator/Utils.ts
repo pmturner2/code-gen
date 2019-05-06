@@ -1,5 +1,4 @@
-import { IInjectable } from '../IInjectable';
-import { ImportMap } from '../ImportMap';
+import { IInjectable, ImportMap } from '../Types';
 
 /**
  *

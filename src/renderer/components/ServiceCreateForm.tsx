@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { addService } from '../generator/FileGenerator';
 import { getServices } from '../generator/ServiceHelper';
-import { IInjectable } from '../IInjectable';
-import { DependencySelector } from './DependencySelector';
+import { IInjectable } from '../Types';
 import { CardWithHeader } from './CardWithHeader';
+import { DependencySelector } from './DependencySelector';
 import { TextInput } from './TextInput';
 
 interface IState {
@@ -42,10 +43,16 @@ export class ServiceCreateForm extends React.Component<{}, IState> {
   };
 
   private handleSubmit = (event: React.SyntheticEvent) => {
-    this.state.dependencies.forEach((value, key) => {
-      if (value) {
-        console.log('KEY ' + key);
-      }
+    const dependencies = this.state.services.filter(s =>
+      this.state.dependencies.get(s.serviceIdentifier)
+    );
+
+    addService({
+      dependencies,
+      importPath: './././test',
+      interfaceName: 'IFakeService',
+      name: 'FakeService',
+      serviceIdentifier: 'ServiceTypes.Fake',
     });
     // console.log('Selected deps', JSON.stringify(this.state.dependencies.keys()));
     event.preventDefault();
