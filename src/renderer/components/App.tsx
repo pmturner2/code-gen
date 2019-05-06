@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IInjectable } from '../IInjectable';
+import { IInjectable } from '../Types';
 import { HomeContent } from './HomeContent';
 import { MainContent } from './MainContent';
 import { ServiceCreateForm } from './ServiceCreateForm';

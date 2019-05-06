@@ -1,5 +1,5 @@
 import React from 'react';
-import { IInjectable } from '../IInjectable';
+import { IInjectable } from '../Types';
 import { DependencySelectorItem } from './DependencySelectorItem';
 
 interface IProps {
