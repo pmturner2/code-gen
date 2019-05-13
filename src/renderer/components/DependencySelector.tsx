@@ -4,6 +4,7 @@ import { DependencySelectorItem } from './DependencySelectorItem';
 
 interface IProps {
   items: IInjectable[];
+  selectedItems: Map<string, string>;
   onChange: (serviceIdentifier: string, isSelected: boolean) => void;
 }
 
@@ -14,7 +15,12 @@ export class DependencySelector extends React.Component<IProps> {
     return (
       <ul>
         {items.map(item => (
-          <DependencySelectorItem key={item.serviceIdentifier} item={item} onChange={onChange} />
+          <DependencySelectorItem
+            isSelected={!!this.props.selectedItems.get(item.serviceIdentifier)}
+            key={item.serviceIdentifier}
+            item={item}
+            onChange={onChange}
+          />
         ))}
       </ul>
     );

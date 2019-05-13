@@ -1,18 +1,29 @@
 import * as React from 'react';
-import { addService } from '../generator/FileGenerator';
+import { generateService, uppercaseFirstLetter } from '../generator/FileGenerator';
 import { getServices } from '../generator/ServiceHelper';
 import { IInjectable } from '../Types';
-import { CardWithHeader } from './CardWithHeader';
 import { DependencySelector } from './DependencySelector';
+import { FormSection } from './FormSection';
 import { TextInput } from './TextInput';
 
 interface IState {
-  services: IInjectable[];
   dependencies: Map<string, boolean>;
+  serviceName: string;
+  servicePath: string;
+  services: IInjectable[];
 }
 
-export class ServiceCreateForm extends React.Component<{}, IState> {
-  state = { dependencies: new Map(), services: new Array<IInjectable>() };
+interface IProps {
+  navigate: (route: string) => void;
+}
+
+export class ServiceCreateForm extends React.Component<IProps, IState> {
+  state = {
+    dependencies: new Map(),
+    serviceName: '',
+    servicePath: '',
+    services: new Array<IInjectable>(),
+  };
 
   componentDidMount() {
     this.fetchServiceList();
@@ -24,15 +35,30 @@ export class ServiceCreateForm extends React.Component<{}, IState> {
     }
     return (
       <form onSubmit={this.handleSubmit}>
-        <CardWithHeader title="Service Name">
-          <TextInput name="Name" placeholder="ABC" onChange={null} />
-        </CardWithHeader>
-        <CardWithHeader title="Dependencies">
-          <DependencySelector items={this.state.services} onChange={this.handleDependencyChange} />
-        </CardWithHeader>
-        <CardWithHeader title="Submit">
+        <FormSection title="Create Service">
+          <TextInput
+            label="Name"
+            name="Name"
+            placeholder="e.g. Game for GameService"
+            onChange={this.handleTextChange}
+          />
+          <TextInput
+            label="Path"
+            name="Path"
+            placeholder="e.g. game for src/services/game"
+            onChange={this.handleTextChange}
+          />
+        </FormSection>
+        <FormSection title="Dependencies" collapsible={true}>
+          <DependencySelector
+            selectedItems={this.state.dependencies}
+            items={this.state.services}
+            onChange={this.handleDependencyChange}
+          />
+        </FormSection>
+        <FormSection title="Submit">
           <input type="submit" name="Submit" value="Create Service" />
-        </CardWithHeader>
+        </FormSection>
       </form>
     );
   }
@@ -42,20 +68,36 @@ export class ServiceCreateForm extends React.Component<{}, IState> {
     this.setState({ services });
   };
 
+  private validateFormItem(name: string, value: string) {
+    if (!value) {
+      alert('Required param missing: ' + name);
+      return false;
+    }
+    return true;
+  }
+
   private handleSubmit = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+
+    if (!this.validateFormItem('Name', this.state.serviceName)) {
+      return;
+    }
+
     const dependencies = this.state.services.filter(s =>
       this.state.dependencies.get(s.serviceIdentifier)
     );
 
-    addService({
+    const serviceName = uppercaseFirstLetter(this.state.serviceName);
+    const importPath = this.state.servicePath || this.state.serviceName;
+    generateService({
       dependencies,
-      importPath: './././test',
-      interfaceName: 'IFakeService',
-      name: 'FakeService',
-      serviceIdentifier: 'ServiceTypes.Fake',
+      importPath: `services/${importPath.toLowerCase()}`,
+      interfaceName: `I${serviceName}Service`,
+      name: `${serviceName}Service`,
+      serviceIdentifier: `ServiceTypes.${serviceName}`,
     });
-    // console.log('Selected deps', JSON.stringify(this.state.dependencies.keys()));
-    event.preventDefault();
+
+    this.props.navigate('Home');
   };
 
   private handleDependencyChange = (serviceIdentifier: string, isSelected: boolean) => {
@@ -65,5 +107,21 @@ export class ServiceCreateForm extends React.Component<{}, IState> {
       dependencies.set(serviceIdentifier, isSelected);
       this.setState({ dependencies });
     }
+  };
+
+  private handleTextChange = (key: string, value: string) => {
+    if (key === 'Name') {
+      this.setState({ serviceName: value });
+    } else if (key === 'Path') {
+      this.setState({ servicePath: value });
+    }
+  };
+
+  private resetForm = () => {
+    this.setState({
+      dependencies: new Map(),
+      serviceName: '',
+      servicePath: '',
+    });
   };
 }

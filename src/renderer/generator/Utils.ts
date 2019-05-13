@@ -1,4 +1,7 @@
+const { promisify } = require('util');
+import fs from 'fs';
 import { IInjectable, ImportMap } from '../Types';
+const readFileAsync = promisify(fs.readFile);
 
 /**
  *
@@ -48,4 +51,22 @@ export function getBoundInjectables(fileLines: string[], importMap: ImportMap): 
     })
     .sort((a: IInjectable, b: IInjectable) => (a.serviceIdentifier < b.serviceIdentifier ? -1 : 1));
   return result;
+}
+
+export async function getStatementsFromFile(path?: string, trim?: boolean): Promise<string[]> {
+  try {
+    const data = await readFileAsync(path, {
+      encoding: 'utf8',
+    });
+    // Lines in the file
+    const lines = data.split(';');
+    if (trim) {
+      return lines.map((l: string) => l.trim());
+    }
+    return lines;
+  } catch (error) {
+    console.log('Error', error);
+  }
+
+  return [];
 }

@@ -22,29 +22,13 @@
   padding: 0px;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  margin-top: 20px;
-  padding: 11px;
-}
-
-.card:first-of-type {
-  margin-top: 20px;
-}
-
-.card .header {
-  color: #ffffff;
-  margin-bottom: 11px;
-  text-transform: uppercase;
-}
-
 .checkbox {
   margin-right: 11px;
 }
 
 .main {
   background-image: linear-gradient(to bottom right, rgb(50, 63, 89), #000);
+  display: flex;
   flex: 1;
 }
 
@@ -104,10 +88,73 @@
 
 ul {
   list-style: none;
+  margin-top: 0px;
   margin-left: 0px;
   padding-left: 0px;
 }
 
 ul li {
   margin-top: 5px;
+}
+
+form .section {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+}
+
+form .section .header-text {
+  color: white;
+  flex: 1;
+  font-weight: 700;
+  font-size: 24px;
+}
+
+form .section .header-icon {
+  color: white;
+  font-weight: 900;
+  font-size: 18px;
+  max-width: 30px;
+  width: 30px;
+}
+
+form .section .header.collapsible {
+  // background-color: #000;
+}
+form .section .header {
+  // border-bottom: 1px solid white;
+  // display: flex;
+  // flex: 1;
+  // flex-direction: row;
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+
+form .section .children {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-left: 10px;
+}
+
+form .text-input-row {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  margin-top: 10px;
+}
+
+form .text-input-label {
+  color: white;
+  flex: 1;
+  font-family: 'Helvetica';
+  font-weight: 100;
+  font-size: 15px;
+  padding-right: 10px;
+  text-align: right;
+}
+
+form .text-input {
+  margin-right: 30px;
+  flex: 3;
 }

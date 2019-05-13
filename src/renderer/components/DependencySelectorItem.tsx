@@ -3,6 +3,7 @@ import { IInjectable } from '../Types';
 
 interface IProps {
   item: IInjectable;
+  isSelected: boolean;
   onChange: (serviceIdentifier: string, isSelected: boolean) => void;
 }
 
@@ -21,6 +22,7 @@ export class DependencySelectorItem extends React.Component<IProps> {
             type="checkbox"
             name={item.serviceIdentifier}
             onChange={this.handleChange}
+            checked={this.props.isSelected}
           />
           {item.serviceIdentifier}
         </label>

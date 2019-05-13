@@ -1,7 +1,7 @@
 const { promisify } = require('util');
 import fs from 'fs';
 import { IInjectable } from '../Types';
-import { getBoundInjectables, getImportMap } from './Utils';
+import { getBoundInjectables, getImportMap, getStatementsFromFile } from './Utils';
 const readFileAsync = promisify(fs.readFile);
 // const writeFileAsync = promisify(fs.writeFile);
 
@@ -10,11 +10,9 @@ export async function getServices(
 ): Promise<IInjectable[]> {
   try {
     const path = inputPath || '../../src/app/DependencyContainer.Services.ts';
-    const data = await readFileAsync(path, {
-      encoding: 'utf8',
-    });
+
     // Lines in the file
-    const lines = data.split(';').map((l: string) => l.trim());
+    const lines = await getStatementsFromFile(path, true);
 
     // Maps each imported object to its file
     const importMap = getImportMap(lines);

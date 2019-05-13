@@ -1,6 +1,10 @@
 import * as React from 'react';
 
-export class HomeContent extends React.Component {
+interface IProps {
+  navigate: (route: string) => void;
+}
+
+export class HomeContent extends React.Component<IProps> {
   render() {
     return <div />;
   }
