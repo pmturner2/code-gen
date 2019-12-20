@@ -1,1 +1,3 @@
+  // TODO(code-gen): remove `@ts-ignore` when this member variable is used.
+  // @ts-ignore
   private __CAMEL_CASE_NAME__: __INTERFACE_NAME__

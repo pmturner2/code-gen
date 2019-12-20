@@ -2,6 +2,7 @@ import * as React from 'react';
 import { generateService } from '../generator/FileGenerator';
 import { getServices } from '../generator/InjectableUtils';
 import { uppercaseFirstLetter } from '../generator/Utils';
+import { showError, showInfo } from '../Logging';
 import { IInjectable } from '../Types';
 import { DependencySelector } from './common/DependencySelector';
 import { FormSection } from './common/FormSection';
@@ -74,32 +75,37 @@ export class ServiceCreateForm extends React.Component<IProps, IState> {
 
   private validateFormItem(name: string, value: string) {
     if (!value) {
-      alert('Required param missing: ' + name);
+      showError('Required param missing: ' + name);
       return false;
     }
     return true;
   }
 
-  private handleSubmit = (event: React.SyntheticEvent) => {
+  private handleSubmit = async (event: React.SyntheticEvent) => {
     event.preventDefault();
 
-    if (!this.validateFormItem('Name', this.state.serviceName)) {
-      return;
+    try {
+      if (!this.validateFormItem('Name', this.state.serviceName)) {
+        return;
+      }
+
+      const dependencies = this.state.services.filter(s =>
+        this.state.dependencies.get(s.serviceIdentifier),
+      );
+
+      const serviceName = uppercaseFirstLetter(this.state.serviceName);
+      const importPath = this.state.servicePath || this.state.serviceName;
+      await generateService({
+        dependencies,
+        importPath: `services/${importPath.toLowerCase()}`,
+        interfaceName: `I${serviceName}Service`,
+        name: `${serviceName}Service`,
+        serviceIdentifier: `ServiceTypes.${serviceName}`,
+      });
+      showInfo(`Successfully generated Service: ${serviceName}`);
+    } catch (error) {
+      showError(error);
     }
-
-    const dependencies = this.state.services.filter(s =>
-      this.state.dependencies.get(s.serviceIdentifier),
-    );
-
-    const serviceName = uppercaseFirstLetter(this.state.serviceName);
-    const importPath = this.state.servicePath || this.state.serviceName;
-    generateService({
-      dependencies,
-      importPath: `services/${importPath.toLowerCase()}`,
-      interfaceName: `I${serviceName}Service`,
-      name: `${serviceName}Service`,
-      serviceIdentifier: `ServiceTypes.${serviceName}`,
-    });
 
     this.props.navigate('Home');
   };

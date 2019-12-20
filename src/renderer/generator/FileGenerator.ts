@@ -7,6 +7,15 @@ import {
   replaceTokens,
   writeAndPrettify,
 } from './Utils';
+
+/**
+ * Gets category from serviceIdentifier
+ * e.g. `ServiceTypes` from `ServiceTypes.Game`
+ */
+function getServiceCategory(serviceIdentifier: string): string {
+  return serviceIdentifier.split('.')[0];
+}
+
 async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> {
   const mapping = new Map<string, string>([
     ['ServiceTypes', 'Service'],
@@ -18,18 +27,19 @@ async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> 
   const lines = await getStatementsFromFile(path);
   const newLines: string[] = [];
   lines.forEach(line => {
-    console.log(`Looking at *${line}*`);
-    if (line.includes(serviceIdentifier)) {
-      // Service Identifier already exists.
-      throw new Error('ServiceIdentifier already exists');
-    }
     if (line.includes(`const ${category} = `)) {
       const body = line.substr(line.indexOf('{'));
       const entries = body
         .split(/[,;}{}\n]/g)
         .map(entry => entry.trim())
         .filter(entry => entry);
+      entries.forEach(entry => {
+        if (entry.includes(serviceName)) {
+          throw new Error('ServiceIdentifier already exists');
+        }
+      });
       entries.push(`${serviceName}: '${mapping.get(category)}.${serviceName}'`);
+
       entries.sort();
       newLines.push(`const ${category} = {${entries.join(',')} }`);
     } else {
@@ -67,12 +77,22 @@ async function generateInjectableClass(
     item,
   );
 
+  const typeImportSet = new Set<string>();
+  typeImportSet.add(getServiceCategory(item.serviceIdentifier));
+  item.dependencies.forEach((dep: IInjectable) => {
+    typeImportSet.add(getServiceCategory(dep.serviceIdentifier));
+  });
+  const typeImports = Array.from(typeImportSet).join(',');
+  const injectImport = item.dependencies.length === 0 ? '' : 'inject, ';
+
   const template = await readFile(fileTemplateFilename);
   const tokens = getStandardTokens(item);
   tokens.set('__DEPENDENCY_MEMBERS__', dependencyMembers);
   tokens.set('__CONSTRUCTOR_INJECTION__', ctorParams);
   tokens.set('__DEPENDENCY_IMPORTS__', depImports);
   tokens.set('__CONSTRUCTOR_MEMBER_ASSIGNMENTS__', memberAssignments);
+  tokens.set('__TYPE_IMPORTS__', typeImports);
+  tokens.set('__INJECT_IMPORT__', injectImport);
   const result = replaceTokens(template, tokens);
 
   // Write output
@@ -121,14 +141,8 @@ async function getDependencyReplacement(
  */
 export async function generateService(item: INewInjectable): Promise<void> {
   try {
-    try {
-      // Add a ServiceIdentifier for the new Injectable to `Types.ts`
-      await writeServiceIdentifier(item.serviceIdentifier);
-    } catch (error) {
-      if (error !== 'ServiceIdentifier already exists') {
-        throw error;
-      }
-    }
+    // Add a ServiceIdentifier for the new Injectable to `Types.ts`
+    await writeServiceIdentifier(item.serviceIdentifier);
 
     // Generates the new class from the template
     await generateInjectableClass(item, kServiceTemplateFile);
