@@ -54,10 +54,8 @@ export async function getBoundInjectablesFromFile(
     const importMap = getImportMap(lines);
     return getBoundInjectables(lines, importMap);
   } catch (error) {
-    console.error('Error getting services', error);
+    throw new Error(`Error getting bound injectables from ${inputPath}: ${error}`);
   }
-
-  return [];
 }
 
 /**

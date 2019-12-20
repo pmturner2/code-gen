@@ -1,4 +1,13 @@
-import { kServiceTemplateFile } from '../Constants';
+import {
+  kAppTypesPath,
+  kDomainStoreDependencyContainerPath,
+  kDomainStoreTemplateFile,
+  kScreenStoreDependencyContainerPath,
+  kScreenStoreTemplateFile,
+  kServiceDependencyContainerPath,
+  kServiceTemplateFile,
+  kWfReactSrcFolder,
+} from '../Constants';
 import { IInjectable, INewInjectable } from '../Types';
 import {
   getStatementsFromFile,
@@ -16,15 +25,14 @@ function getServiceCategory(serviceIdentifier: string): string {
   return serviceIdentifier.split('.')[0];
 }
 
-async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> {
-  const mapping = new Map<string, string>([
+async function updateAppTypes(serviceIdentifier: string): Promise<void> {
+  const categoryMapping = new Map<string, string>([
     ['ServiceTypes', 'Service'],
     ['DomainStoreTypes', 'Domain'],
     ['ScreenStoreTypes', 'Screen'],
   ]);
   const [category, serviceName] = serviceIdentifier.split('.');
-  const path = '../../src/app/Types.ts';
-  const lines = await getStatementsFromFile(path);
+  const lines = await getStatementsFromFile(kAppTypesPath);
   const newLines: string[] = [];
   lines.forEach(line => {
     if (line.includes(`const ${category} = `)) {
@@ -38,7 +46,7 @@ async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> 
           throw new Error('ServiceIdentifier already exists');
         }
       });
-      entries.push(`${serviceName}: '${mapping.get(category)}.${serviceName}'`);
+      entries.push(`${serviceName}: '${categoryMapping.get(category)}.${serviceName}'`);
 
       entries.sort();
       newLines.push(`const ${category} = {${entries.join(',')} }`);
@@ -47,7 +55,92 @@ async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> 
     }
   });
   const result = newLines.join(';');
-  writeAndPrettify(result, 'app/Types.ts');
+  writeAndPrettify(result, kAppTypesPath);
+}
+
+async function addToDependencyContainerSection(
+  lines: string[],
+  item: IInjectable,
+  lineFilter: (line: string) => boolean,
+  snippetFile: string,
+  sort?: boolean,
+): Promise<string[]> {
+  const relevantLines = lines.filter(line => lineFilter(line));
+  const template = await readFile(snippetFile);
+  const tokens = getStandardTokens(item);
+  const newImport = replaceTokens(template, tokens);
+  relevantLines.push(newImport);
+  if (sort) {
+    return relevantLines.sort();
+  }
+  return relevantLines;
+}
+/**
+ * Updates DependencyContainer and writes a new binding.
+ *
+ * @param injectable Injectable to add
+ * @param filePath path to the DependencyContainer file
+ * @param forceInit if true, will add a `DependencyContainer.get` to force init of the Injectable
+ */
+async function updateDependencyContainer(
+  item: IInjectable,
+  filePath: string,
+  forceInit: boolean,
+): Promise<void> {
+  const lines = await getStatementsFromFile(filePath);
+
+  // Add `import`
+  const importLines = await addToDependencyContainerSection(
+    lines,
+    item,
+    (line: string) => line.startsWith('import'),
+    'templates/snippets/ImportInterfaceAndConcrete._ts',
+    true,
+  );
+
+  // Add `bind`
+  const bindLines = await addToDependencyContainerSection(
+    lines,
+    item,
+    (line: string) => line.trim().startsWith('bind'),
+    'templates/snippets/DependencyBinding._ts',
+  );
+
+  const forceInitLines = forceInit
+    ? await addToDependencyContainerSection(
+        lines,
+        item,
+        (line: string) => line.trim().startsWith('DependencyContainer.get'),
+        'templates/snippets/DependencyForceInit._ts',
+      )
+    : [];
+
+  let newLines: string[] = [];
+  let addedImports = false;
+  let addedBindings = false;
+  let addedForceInit = false;
+  lines.forEach(line => {
+    if (line.startsWith('import')) {
+      if (!addedImports) {
+        newLines = newLines.concat(importLines);
+        addedImports = true;
+      }
+    } else if (line.trim().startsWith('bind')) {
+      if (!addedBindings) {
+        newLines = newLines.concat(bindLines);
+        addedBindings = true;
+      }
+    } else if (line.trim().startsWith('DependencyContainer.get')) {
+      if (!addedForceInit) {
+        newLines = newLines.concat(forceInitLines);
+        addedForceInit = true;
+      }
+    } else {
+      newLines.push(line);
+    }
+  });
+  const result = newLines.join(';');
+  writeAndPrettify(result, filePath);
 }
 
 /**
@@ -56,7 +149,7 @@ async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> 
  * @param item params to generate from
  * @param fileTemplateFilename template to build from
  */
-async function generateInjectableClass(
+async function writeInjectableClass(
   item: INewInjectable,
   fileTemplateFilename: string,
 ): Promise<void> {
@@ -96,7 +189,7 @@ async function generateInjectableClass(
   const result = replaceTokens(template, tokens);
 
   // Write output
-  writeAndPrettify(result, `${item.importPath}/${item.name}.ts`);
+  writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
 }
 
 /**
@@ -140,15 +233,63 @@ async function getDependencyReplacement(
  * @param item params to generate from
  */
 export async function generateService(item: INewInjectable): Promise<void> {
+  return generateInjectableClass(
+    item,
+    kServiceDependencyContainerPath,
+    kServiceTemplateFile,
+    false,
+  );
+}
+
+/**
+ * Generates a new `DomainStore` class, and properly updates the `wf-react` codebase
+ *
+ * @param item params to generate from
+ */
+export async function generateDomainStore(item: INewInjectable): Promise<void> {
+  return generateInjectableClass(
+    item,
+    kDomainStoreDependencyContainerPath,
+    kDomainStoreTemplateFile,
+    true,
+  );
+}
+
+/**
+ * Generates a new `DomainStore` class, and properly updates the `wf-react` codebase
+ *
+ * @param item params to generate from
+ */
+export async function generateScreenStore(item: INewInjectable): Promise<void> {
+  return generateInjectableClass(
+    item,
+    kScreenStoreDependencyContainerPath,
+    kScreenStoreTemplateFile,
+    true,
+  );
+}
+
+/**
+ * Generates a new `DomainStore` class, and properly updates the `wf-react` codebase
+ *
+ * @param item params to generate from
+ */
+async function generateInjectableClass(
+  item: INewInjectable,
+  dependencyContainerPath: string,
+  fileTemplate: string,
+  forceDependencyInit: boolean,
+): Promise<void> {
   try {
     // Add a ServiceIdentifier for the new Injectable to `Types.ts`
-    await writeServiceIdentifier(item.serviceIdentifier);
+    await updateAppTypes(item.serviceIdentifier);
+
+    // Adds a call to `bind` the injectable in the DependencyContainer class
+    await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit);
 
     // Generates the new class from the template
-    await generateInjectableClass(item, kServiceTemplateFile);
-
-    // TODO: add binding.
+    await writeInjectableClass(item, fileTemplate);
   } catch (error) {
-    throw new Error(`Error generating service ${item.name}: ${error}`);
+    throw new Error(`Error generating injectable ${item.name}: ${error}`);
   }
 }

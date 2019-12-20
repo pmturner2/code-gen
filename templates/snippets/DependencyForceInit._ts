@@ -1,0 +1,1 @@
+DependencyContainer.get<__INTERFACE_NAME__>(__SERVICE_IDENTIFIER__);

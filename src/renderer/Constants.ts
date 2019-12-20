@@ -1,13 +1,4 @@
 /**
- * Paths to DependencyContainer.ts files in `wf-react` relative to `wf-react/src`
- */
-export const kServiceDependencyContainerPath = '../../src/app/DependencyContainer.Services.ts';
-export const kDomainStoreDependencyContainerPath =
-  '../../src/app/DependencyContainer.DomainStores.ts';
-export const kScreenStoreDependencyContainerPath =
-  '../../src/app/DependencyContainer.ScreenStores.ts';
-
-/**
  * Used for temporary scratch space
  */
 export const kTmpFolder = './.TMP';
@@ -27,3 +18,13 @@ export const kWfReactSrcFolder = `${kWfReactFolder}/src`;
  */
 
 export const kServiceTemplateFile = 'templates/file/Service._ts';
+export const kDomainStoreTemplateFile = 'templates/file/DomainStore._ts';
+export const kScreenStoreTemplateFile = 'templates/file/ScreenStore._ts';
+
+/**
+ * Paths to DependencyContainer.ts files in `wf-react` relative to `code-gen` root`
+ */
+export const kServiceDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.Services.ts`;
+export const kDomainStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.DomainStores.ts`;
+export const kScreenStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.ScreenStores.ts`;
+export const kAppTypesPath = `${kWfReactSrcFolder}/app/Types.ts`;

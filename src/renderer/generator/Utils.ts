@@ -1,7 +1,7 @@
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 import fs from 'fs';
-import { kTmpFolder, kWfReactFolder, kWfReactSrcFolder } from '../Constants';
+import { kTmpFolder, kWfReactFolder } from '../Constants';
 import { ImportMap } from '../Types';
 
 const readFileAsync = promisify(fs.readFile);
@@ -38,40 +38,30 @@ export function getImportMap(fileLines: string[]): ImportMap {
 }
 
 /**
- * For the body of a file, build a map of each import to the file path
- *
- * @param fileBody string contents of a file
- *
- * @returns Map of each imported item to its file path.
- */
-export function getImportMapFromFileBody(fileBody: string): ImportMap {
-  const lines = fileBody.split(';').map((l: string) => l.trim());
-  return getImportMap(lines);
-}
-
-/**
  * Reads file, and splits into an array of statements... which can be treated as the
  * relevant lines of the file. Semicolon is used as the delimiter when reading.
  *
  * @param path path to the file
  * @param trim if true, will trim whitespace
  */
-export async function getStatementsFromFile(path?: string, trim?: boolean): Promise<string[]> {
+export async function getStatementsFromFile(
+  path?: string,
+  trim?: boolean,
+  delimeter?: string,
+): Promise<string[]> {
   try {
     const data = await readFileAsync(path, {
       encoding: 'utf8',
     });
     // Lines in the file
-    const lines = data.split(';');
+    const lines = data.split(delimeter || ';');
     if (trim) {
       return lines.map((l: string) => l.trim());
     }
     return lines;
   } catch (error) {
-    console.log('Error in getStatementsFromFile', error);
+    throw new Error(`Error getStatementsFromFile ${path}: ${error}`);
   }
-
-  return [];
 }
 
 /**
@@ -123,23 +113,30 @@ export function replaceTokens(str: string, tokens: Map<string, string>) {
  * @param path output path, relative to `wf-react/src`
  */
 export async function writeAndPrettify(data: string, path: string): Promise<void> {
-  const pathToFile = path.substr(0, path.lastIndexOf('/'));
+  try {
+    const pathToFile = path.substr(0, path.lastIndexOf('/'));
+    const filename = path.substr(path.lastIndexOf('/'));
 
-  // Make sure folder exists in the temp space
-  await fs.promises.mkdir(`${kTmpFolder}/${pathToFile}`, { recursive: true });
+    const tmpPath = `${kTmpFolder}/${pathToFile.replace(/\.\./gi, () => '.')}`;
 
-  // Write the raw, unlinted / prettified file contents to a temporary space.
-  await writeFileAsync(`${kTmpFolder}/${path}_ugly.ts`, data, {
-    flag: 'w+',
-  });
+    // Make sure folder exists in the temp space
+    await fs.promises.mkdir(tmpPath, { recursive: true });
 
-  await fs.promises.mkdir(`${kWfReactSrcFolder}/${pathToFile}`, { recursive: true });
+    // Write the raw, unlinted / prettified file contents to a temporary space.
+    await writeFileAsync(`${tmpPath}${filename}_ugly.ts`, data, {
+      flag: 'w+',
+    });
 
-  // Run prettier
-  await exec(
-    `${kWfReactFolder}/node_modules/.bin/prettier ${kTmpFolder}/${path}_ugly.ts > ${kWfReactSrcFolder}/${path}`,
-  );
+    await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
 
-  // Run eslint --fix
-  await exec(`${kWfReactFolder}/node_modules/.bin/eslint --fix ${kWfReactSrcFolder}/${path}`);
+    // Run prettier
+    await exec(
+      `${kWfReactFolder}/node_modules/.bin/prettier ${tmpPath}${filename}_ugly.ts > ${path}`,
+    );
+
+    // Run eslint --fix
+    await exec(`${kWfReactFolder}/node_modules/.bin/eslint --fix ${path}`);
+  } catch (error) {
+    throw new Error(`Error writeAndPrettify ${path}: ${error}`);
+  }
 }

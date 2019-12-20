@@ -1,0 +1,32 @@
+import { __TYPE_IMPORTS__ } from 'app/Types';
+import { InjectableBase } from 'common/InjectableBase';
+import { __INJECT_IMPORT__ injectable } from 'inversify';
+import { action } from 'mobx';
+__DEPENDENCY_IMPORTS__
+
+export interface __INTERFACE_NAME__ {
+  readonly initialized: boolean;
+}
+
+@injectable()
+export class __NAME__ extends InjectableBase implements __INTERFACE_NAME__ {
+  __DEPENDENCY_MEMBERS__;
+
+  constructor(__CONSTRUCTOR_INJECTION__) {
+    super(__SERVICE_IDENTIFIER__);
+    __CONSTRUCTOR_MEMBER_ASSIGNMENTS__
+    this.awaitDependenciesAndInit(arguments);
+  }
+
+  @action
+  protected initDefaultValues(): void {
+    // TODO: Sync initialization goes here.
+    // Setup default values, event listeners, etc.
+  }
+
+  @action
+  protected async init(): Promise<void> {
+    // TODO: Async initialization goes here.
+    // When this is called, all of the injected dependencies will have been initialized
+  }
+}
