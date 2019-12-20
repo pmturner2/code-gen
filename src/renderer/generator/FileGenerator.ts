@@ -1,13 +1,13 @@
-const { promisify } = require('util');
-const exec = promisify(require('child_process').exec);
-import fs from 'fs';
+import { kServiceTemplateFile } from '../Constants';
 import { IInjectable, INewInjectable } from '../Types';
-import { getStatementsFromFile } from './Utils';
-
-const readFileAsync = promisify(fs.readFile);
-const writeFileAsync = promisify(fs.writeFile);
-
-export async function addServiceIdentifier(serviceIdentifier: string): Promise<void> {
+import {
+  getStatementsFromFile,
+  lowercaseFirstLetter,
+  readFile,
+  replaceTokens,
+  writeAndPrettify,
+} from './Utils';
+async function writeServiceIdentifier(serviceIdentifier: string): Promise<void> {
   const mapping = new Map<string, string>([
     ['ServiceTypes', 'Service'],
     ['DomainStoreTypes', 'Domain'],
@@ -18,6 +18,11 @@ export async function addServiceIdentifier(serviceIdentifier: string): Promise<v
   const lines = await getStatementsFromFile(path);
   const newLines: string[] = [];
   lines.forEach(line => {
+    console.log(`Looking at *${line}*`);
+    if (line.includes(serviceIdentifier)) {
+      // Service Identifier already exists.
+      throw new Error('ServiceIdentifier already exists');
+    }
     if (line.includes(`const ${category} = `)) {
       const body = line.substr(line.indexOf('{'));
       const entries = body
@@ -35,40 +40,31 @@ export async function addServiceIdentifier(serviceIdentifier: string): Promise<v
   writeAndPrettify(result, 'app/Types.ts');
 }
 
-export async function addBinding(item: IInjectable): Promise<void> {}
-
-export async function generateService(item: INewInjectable): Promise<void> {
-  try {
-    await addServiceIdentifier(item.serviceIdentifier);
-
-    await createInjectableClass(item, 'templates/file/Service._ts');
-  } catch (error) {
-    alert(`
-    Error generating service ${item.name}
-     ${error}
-     `);
-  }
-}
-
-export async function createInjectableClass(
+/**
+ * Generates a new injectable class (Service, DomainStore, ScreenStore)
+ *
+ * @param item params to generate from
+ * @param fileTemplateFilename template to build from
+ */
+async function generateInjectableClass(
   item: INewInjectable,
-  fileTemplateFilename: string
+  fileTemplateFilename: string,
 ): Promise<void> {
   const dependencyMembers = await getDependencyReplacement(
     'templates/snippets/DependencyMember._ts',
-    item
+    item,
   );
   const ctorParams = await getDependencyReplacement(
     'templates/snippets/ConstructorInjection._ts',
-    item
+    item,
   );
   const depImports = await getDependencyReplacement(
     'templates/snippets/ImportDependency._ts',
-    item
+    item,
   );
   const memberAssignments = await getDependencyReplacement(
     'templates/snippets/ConstructorMemberAssignment._ts',
-    item
+    item,
   );
 
   const template = await readFile(fileTemplateFilename);
@@ -79,54 +75,36 @@ export async function createInjectableClass(
   tokens.set('__CONSTRUCTOR_MEMBER_ASSIGNMENTS__', memberAssignments);
   const result = replaceTokens(template, tokens);
 
+  // Write output
   writeAndPrettify(result, `${item.importPath}/${item.name}.ts`);
 }
 
-export async function readFile(path: string): Promise<string> {
-  const data = await readFileAsync(path, {
-    encoding: 'utf8',
-  });
-  return data;
-}
-
-function fixCase(item: IInjectable): IInjectable {
-  return {
-    ...item,
-    importPath: item.importPath.toLowerCase(),
-    interfaceName: uppercaseFirstLetter(item.interfaceName),
-    name: uppercaseFirstLetter(item.name),
-    serviceIdentifier: uppercaseFirstLetter(item.serviceIdentifier),
-  };
-}
-
-export function lowercaseFirstLetter(str: string) {
-  return `${str.charAt(0).toLowerCase()}${str.slice(1)}`;
-}
-
-export function uppercaseFirstLetter(str: string) {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}
-
-function replaceTokens(str: string, tokens: Map<string, string>) {
-  const re = new RegExp(Array.from(tokens.keys()).join('|'), 'gi');
-
-  return str.replace(re, matched => tokens.get(matched));
-}
-
+/**
+ * Generates a map of tokens from the template to their replacement.
+ * This is used to populate the file template later.
+ *
+ * @param item Item to build the map from
+ */
 function getStandardTokens(item: IInjectable): Map<string, string> {
-  const tokens: Map<string, string> = new Map([
+  return new Map([
     ['__SERVICE_IDENTIFIER__', item.serviceIdentifier],
     ['__NAME__', item.name],
     ['__INTERFACE_NAME__', item.interfaceName],
     ['__CAMEL_CASE_NAME__', lowercaseFirstLetter(item.name)],
     ['__IMPORT_PATH__', item.importPath],
   ]);
-  return tokens;
 }
 
+/**
+ * For a particular snippet, populate the output with the item's dependencies
+ * e.g. this could build a string for all of the imports that a service depends on
+ *
+ * @param snippetFile template snippet to build from
+ * @param item item whose dependencies will be generated.
+ */
 async function getDependencyReplacement(
   snippetFile: string,
-  item: INewInjectable
+  item: INewInjectable,
 ): Promise<string> {
   const template = await readFile(snippetFile);
   return item.dependencies
@@ -137,27 +115,26 @@ async function getDependencyReplacement(
 }
 
 /**
+ * Generates a new `Service` class, and properly updates the `wf-react` codebase
  *
- * @param data data to be written
- * @param path output path, relative to `wf-react/src`
+ * @param item params to generate from
  */
-async function writeAndPrettify(data: string, path: string): Promise<void> {
-  const pathToFile = path.substr(0, path.lastIndexOf('/'));
+export async function generateService(item: INewInjectable): Promise<void> {
+  try {
+    try {
+      // Add a ServiceIdentifier for the new Injectable to `Types.ts`
+      await writeServiceIdentifier(item.serviceIdentifier);
+    } catch (error) {
+      if (error !== 'ServiceIdentifier already exists') {
+        throw error;
+      }
+    }
 
-  const tmpFolder = './.TMP/';
-  const wfReactFolder = '../../';
-  const wfReactSrcFolder = `${wfReactFolder}src/`;
-  await fs.promises.mkdir(`${tmpFolder}/${pathToFile}`, { recursive: true });
-  await writeFileAsync(`${tmpFolder}/${path}_ugly.ts`, data, {
-    flag: 'w+',
-  });
-  await fs.promises.mkdir(`${wfReactSrcFolder}${pathToFile}`, { recursive: true });
+    // Generates the new class from the template
+    await generateInjectableClass(item, kServiceTemplateFile);
 
-  // Run prettier
-  await exec(
-    `${wfReactFolder}node_modules/.bin/prettier ${tmpFolder}/${path}_ugly.ts > ${wfReactSrcFolder}${path}`
-  );
-
-  // Run ts-lint fix
-  await exec(`${wfReactFolder}node_modules/.bin/tslint --fix ${wfReactSrcFolder}/${path}`);
+    // TODO: add binding.
+  } catch (error) {
+    throw new Error(`Error generating service ${item.name}: ${error}`);
+  }
 }

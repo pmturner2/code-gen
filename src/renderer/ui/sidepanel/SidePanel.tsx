@@ -1,7 +1,7 @@
 import React from 'react';
-import { SidebarOption } from './SidebarOption';
+import { SidePanelOption } from './SidePanelOption';
 
-export interface ISidebarOption {
+export interface ISidePanelOption {
   id: string;
   title: string;
   onClick: () => void;
@@ -9,15 +9,18 @@ export interface ISidebarOption {
 
 export interface IProps {
   selectedOptionId: string;
-  options: ISidebarOption[];
+  options: ISidePanelOption[];
 }
 
-export class Sidebar extends React.Component<IProps> {
+/**
+ * Panel on the left side of the screen with options
+ */
+export class SidePanel extends React.Component<IProps> {
   render() {
     return (
       <div className="sidebar">
         {this.props.options.map(option => (
-          <SidebarOption
+          <SidePanelOption
             id={option.id}
             key={option.id}
             isSelected={this.isSelected(option.id)}

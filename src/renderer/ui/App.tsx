@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { IInjectable } from '../Types';
 import { HomeContent } from './HomeContent';
-import { MainContent } from './MainContent';
+import { MainPanel } from './MainPanel';
 import { ServiceCreateForm } from './ServiceCreateForm';
-import { ISidebarOption, Sidebar } from './sidebar/Sidebar';
+import { ISidePanelOption, SidePanel } from './sidepanel/SidePanel';
 
 interface IState {
-  screenContent: React.ReactElement<any>;
+  mainContent: React.ReactElement<any>;
   selectedOptionId: string;
   services: IInjectable[];
 }
@@ -15,30 +15,33 @@ export class App extends React.Component<{}, IState> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      screenContent: <HomeContent navigate={this.navigateTo} />,
+      mainContent: <HomeContent navigate={this.navigateTo} />,
       selectedOptionId: 'Home',
       services: new Array<IInjectable>(),
     };
   }
 
   componentDidCatch?(error: Error, errorInfo: React.ErrorInfo): void {
-    console.log(error, errorInfo);
+    console.error(error, errorInfo);
   }
 
   render() {
     return (
       <div className="app-root">
-        <Sidebar selectedOptionId={this.state.selectedOptionId} options={this.sideBarOptions()} />
-        <MainContent>{this.state.screenContent}</MainContent>
+        <SidePanel
+          selectedOptionId={this.state.selectedOptionId}
+          options={this.sidePanelOptions()}
+        />
+        <MainPanel>{this.state.mainContent}</MainPanel>
       </div>
     );
   }
 
-  private sideBarOptions(): ISidebarOption[] {
-    return [this.createSidebarOption('Home'), this.createSidebarOption('Generate Service')];
+  private sidePanelOptions(): ISidePanelOption[] {
+    return [this.createSidePanelOption('Home'), this.createSidePanelOption('Generate Service')];
   }
 
-  private createSidebarOption(title: string): ISidebarOption {
+  private createSidePanelOption(title: string): ISidePanelOption {
     return {
       id: title,
       onClick: () => {
@@ -52,13 +55,13 @@ export class App extends React.Component<{}, IState> {
     switch (screen) {
       case 'Home':
         this.setState({
-          screenContent: <HomeContent navigate={this.navigateTo} />,
+          mainContent: <HomeContent navigate={this.navigateTo} />,
           selectedOptionId: 'Home',
         });
         break;
       case 'Generate Service':
         this.setState({
-          screenContent: <ServiceCreateForm navigate={this.navigateTo} />,
+          mainContent: <ServiceCreateForm navigate={this.navigateTo} />,
           selectedOptionId: 'Generate Service',
         });
         break;

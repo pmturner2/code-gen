@@ -1,4 +1,6 @@
-// Used to represent stores, services, etc
+/**
+ * Used to represent stores, services, etc
+ */
 export interface IInjectable {
   name: string; // e.g. GameService
   interfaceName: string; // e.g. IGameService
@@ -6,6 +8,9 @@ export interface IInjectable {
   importPath: string; // e.g. 'services/game/GameService.ts'
 }
 
+/**
+ * Mapping of an import to it's file.
+ */
 export type ImportMap = Map<string, string>;
 
 export interface INewInjectable extends IInjectable {

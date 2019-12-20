@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { generateService, uppercaseFirstLetter } from '../generator/FileGenerator';
-import { getServices } from '../generator/ServiceHelper';
+import { generateService } from '../generator/FileGenerator';
+import { getServices } from '../generator/InjectableUtils';
+import { uppercaseFirstLetter } from '../generator/Utils';
 import { IInjectable } from '../Types';
-import { DependencySelector } from './DependencySelector';
-import { FormSection } from './FormSection';
-import { TextInput } from './TextInput';
+import { DependencySelector } from './common/DependencySelector';
+import { FormSection } from './common/FormSection';
+import { TextInput } from './common/TextInput';
 
 interface IState {
   dependencies: Map<string, boolean>;
@@ -17,6 +18,9 @@ interface IProps {
   navigate: (route: string) => void;
 }
 
+/**
+ * Form for generating Service classes
+ */
 export class ServiceCreateForm extends React.Component<IProps, IState> {
   state = {
     dependencies: new Map(),
@@ -84,7 +88,7 @@ export class ServiceCreateForm extends React.Component<IProps, IState> {
     }
 
     const dependencies = this.state.services.filter(s =>
-      this.state.dependencies.get(s.serviceIdentifier)
+      this.state.dependencies.get(s.serviceIdentifier),
     );
 
     const serviceName = uppercaseFirstLetter(this.state.serviceName);

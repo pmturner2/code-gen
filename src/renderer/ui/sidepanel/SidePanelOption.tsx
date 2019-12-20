@@ -7,7 +7,10 @@ interface IProps {
   isSelected?: boolean;
 }
 
-export class SidebarOption extends React.Component<IProps> {
+/**
+ * Option on the left side of the screen
+ */
+export class SidePanelOption extends React.Component<IProps> {
   render() {
     const { title, isSelected } = this.props;
     const className = isSelected ? 'sidebar-option selected' : 'sidebar-option';

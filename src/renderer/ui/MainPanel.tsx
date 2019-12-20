@@ -1,6 +1,9 @@
 import React from 'react';
 
-export class MainContent extends React.Component {
+/**
+ * Style wrapper around main panel content.
+ */
+export class MainPanel extends React.Component {
   render() {
     return <div className="main">{this.props.children}</div>;
   }
