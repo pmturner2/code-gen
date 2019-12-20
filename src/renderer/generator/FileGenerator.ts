@@ -102,15 +102,16 @@ async function updateDependencyContainer(
   const bindLines = await addToDependencyContainerSection(
     lines,
     item,
-    (line: string) => line.trim().startsWith('bind'),
+    (line: string) => line.trim().includes('bind<'),
     'templates/snippets/DependencyBinding._ts',
   );
 
+  // Add `DepedendencyContainer.get`
   const forceInitLines = forceInit
     ? await addToDependencyContainerSection(
         lines,
         item,
-        (line: string) => line.trim().startsWith('DependencyContainer.get'),
+        (line: string) => line.trim().includes('DependencyContainer.get'),
         'templates/snippets/DependencyForceInit._ts',
       )
     : [];
@@ -125,12 +126,12 @@ async function updateDependencyContainer(
         newLines = newLines.concat(importLines);
         addedImports = true;
       }
-    } else if (line.trim().startsWith('bind')) {
+    } else if (line.trim().includes('bind<')) {
       if (!addedBindings) {
         newLines = newLines.concat(bindLines);
         addedBindings = true;
       }
-    } else if (line.trim().startsWith('DependencyContainer.get')) {
+    } else if (line.trim().includes('DependencyContainer.get')) {
       if (!addedForceInit) {
         newLines = newLines.concat(forceInitLines);
         addedForceInit = true;
