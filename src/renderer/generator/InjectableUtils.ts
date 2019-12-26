@@ -4,7 +4,7 @@ import {
   kServiceDependencyContainerPath,
 } from '../Constants';
 import { IInjectable, ImportMap } from '../Types';
-import { getImportMap, getStatementsFromFile } from './Utils';
+import { getImportMap, getTokensFromFile } from './Utils';
 
 /**
  * Designed for use with DependencyContainer classes.
@@ -48,7 +48,7 @@ export async function getBoundInjectablesFromFile(
 ): Promise<IInjectable[]> {
   try {
     // Lines in the file
-    const lines = await getStatementsFromFile(inputPath, true);
+    const lines = await getTokensFromFile(inputPath, true);
 
     // Maps each imported object to its file
     const importMap = getImportMap(lines);

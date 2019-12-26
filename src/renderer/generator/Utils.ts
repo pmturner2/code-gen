@@ -38,13 +38,12 @@ export function getImportMap(fileLines: string[]): ImportMap {
 }
 
 /**
- * Reads file, and splits into an array of statements... which can be treated as the
- * relevant lines of the file. Semicolon is used as the delimiter when reading.
+ * Reads file, and splits into an array of tokens. Semicolon is used as the delimiter when reading.
  *
  * @param path path to the file
  * @param trim if true, will trim whitespace
  */
-export async function getStatementsFromFile(
+export async function getTokensFromFile(
   path?: string,
   trim?: boolean,
   delimeter?: string,
@@ -60,7 +59,7 @@ export async function getStatementsFromFile(
     }
     return lines;
   } catch (error) {
-    throw new Error(`Error getStatementsFromFile ${path}: ${error}`);
+    throw new Error(`Error getTokensFromFile ${path}: ${error}`);
   }
 }
 
@@ -128,6 +127,9 @@ export async function writeAndPrettify(data: string, path: string): Promise<void
     });
 
     await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
+
+    // TODO:
+    // need to write to final output last, so it doesn't fail prettier / eslint.
 
     // Run prettier
     await exec(

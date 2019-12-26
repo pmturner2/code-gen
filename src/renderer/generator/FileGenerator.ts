@@ -10,7 +10,7 @@ import {
 } from '../Constants';
 import { IInjectable, INewInjectable } from '../Types';
 import {
-  getStatementsFromFile,
+  getTokensFromFile,
   lowercaseFirstLetter,
   readFile,
   replaceTokens,
@@ -32,11 +32,12 @@ async function updateAppTypes(serviceIdentifier: string): Promise<void> {
     ['ScreenStoreTypes', 'Screen'],
   ]);
   const [category, serviceName] = serviceIdentifier.split('.');
-  const lines = await getStatementsFromFile(kAppTypesPath);
+  const lines = await getTokensFromFile(kAppTypesPath);
   const newLines: string[] = [];
   lines.forEach(line => {
     if (line.includes(`const ${category} = `)) {
-      const body = line.substr(line.indexOf('{'));
+      const categorySection = [line.substr(0, line.indexOf('{') + 1)];
+      const body = line.substr(line.indexOf('{') + 1, line.indexOf('}'));
       const entries = body
         .split(/[,;}{}\n]/g)
         .map(entry => entry.trim())
@@ -47,9 +48,10 @@ async function updateAppTypes(serviceIdentifier: string): Promise<void> {
         }
       });
       entries.push(`${serviceName}: '${categoryMapping.get(category)}.${serviceName}'`);
-
       entries.sort();
-      newLines.push(`const ${category} = {${entries.join(',')} }`);
+      categorySection.push(entries.join(','));
+      categorySection.push(` }\n`);
+      newLines.push(categorySection.join('\n'));
     } else {
       newLines.push(line);
     }
@@ -58,23 +60,19 @@ async function updateAppTypes(serviceIdentifier: string): Promise<void> {
   writeAndPrettify(result, kAppTypesPath);
 }
 
-async function addToDependencyContainerSection(
-  lines: string[],
-  item: IInjectable,
-  lineFilter: (line: string) => boolean,
-  snippetFile: string,
-  sort?: boolean,
-): Promise<string[]> {
-  const relevantLines = lines.filter(line => lineFilter(line));
+async function generateImport(item: IInjectable, includeConcrete?: boolean): Promise<string> {
+  const snippetFile = includeConcrete
+    ? 'templates/snippets/ImportInterfaceAndConcrete._ts'
+    : 'templates/snippets/ImportInterface._ts';
+  return readAndReplaceTokens(item, snippetFile);
+}
+
+async function readAndReplaceTokens(item: IInjectable, snippetFile: string): Promise<string> {
   const template = await readFile(snippetFile);
   const tokens = getStandardTokens(item);
-  const newImport = replaceTokens(template, tokens);
-  relevantLines.push(newImport);
-  if (sort) {
-    return relevantLines.sort();
-  }
-  return relevantLines;
+  return replaceTokens(template, tokens);
 }
+
 /**
  * Updates DependencyContainer and writes a new binding.
  *
@@ -87,58 +85,38 @@ async function updateDependencyContainer(
   filePath: string,
   forceInit: boolean,
 ): Promise<void> {
-  const lines = await getStatementsFromFile(filePath);
+  const lines = await getTokensFromFile(filePath);
 
-  // Add `import`
-  const importLines = await addToDependencyContainerSection(
-    lines,
-    item,
-    (line: string) => line.startsWith('import'),
-    'templates/snippets/ImportInterfaceAndConcrete._ts',
-    true,
-  );
+  let newImport = await generateImport(item, true);
+  let newBind = await readAndReplaceTokens(item, 'templates/snippets/DependencyBinding._ts');
+  let newForceInit =
+    forceInit && (await readAndReplaceTokens(item, 'templates/snippets/DependencyForceInit._ts'));
 
-  // Add `bind`
-  const bindLines = await addToDependencyContainerSection(
-    lines,
-    item,
-    (line: string) => line.trim().includes('bind<'),
-    'templates/snippets/DependencyBinding._ts',
-  );
-
-  // Add `DepedendencyContainer.get`
-  const forceInitLines = forceInit
-    ? await addToDependencyContainerSection(
-        lines,
-        item,
-        (line: string) => line.trim().includes('DependencyContainer.get'),
-        'templates/snippets/DependencyForceInit._ts',
-      )
-    : [];
-
-  let newLines: string[] = [];
-  let addedImports = false;
-  let addedBindings = false;
-  let addedForceInit = false;
+  const newLines: string[] = [];
+  let processingBind = false;
+  let processingForceInit = false;
   lines.forEach(line => {
-    if (line.startsWith('import')) {
-      if (!addedImports) {
-        newLines = newLines.concat(importLines);
-        addedImports = true;
+    if (line.startsWith('import') && newImport) {
+      newLines.push(newImport);
+      newImport = null;
+    } else if (line.includes('bind<')) {
+      processingBind = true;
+    } else if (processingBind) {
+      processingBind = false;
+      if (newBind) {
+        newLines.push(newBind);
+        newBind = null;
       }
-    } else if (line.trim().includes('bind<')) {
-      if (!addedBindings) {
-        newLines = newLines.concat(bindLines);
-        addedBindings = true;
+    } else if (line.includes('DependencyContainer.get')) {
+      processingForceInit = true;
+    } else if (processingForceInit) {
+      processingForceInit = false;
+      if (newForceInit) {
+        newLines.push(newForceInit);
+        newForceInit = null;
       }
-    } else if (line.trim().includes('DependencyContainer.get')) {
-      if (!addedForceInit) {
-        newLines = newLines.concat(forceInitLines);
-        addedForceInit = true;
-      }
-    } else {
-      newLines.push(line);
     }
+    newLines.push(line);
   });
   const result = newLines.join(';');
   writeAndPrettify(result, filePath);
@@ -162,10 +140,7 @@ async function writeInjectableClass(
     'templates/snippets/ConstructorInjection._ts',
     item,
   );
-  const depImports = await getDependencyReplacement(
-    'templates/snippets/ImportDependency._ts',
-    item,
-  );
+  const depImports = await getDependencyReplacement('templates/snippets/ImportInterface._ts', item);
   const memberAssignments = await getDependencyReplacement(
     'templates/snippets/ConstructorMemberAssignment._ts',
     item,
