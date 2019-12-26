@@ -110,34 +110,38 @@ export function replaceTokens(str: string, tokens: Map<string, string>) {
  *
  * @param data data to be written
  * @param path output path, relative to `wf-react/src`
+ *
+ * @returns a Promise to execute to finalize the output.
  */
-export async function writeAndPrettify(data: string, path: string): Promise<void> {
+export async function writeAndPrettify(data: string, path: string): Promise<() => void> {
   try {
     const pathToFile = path.substr(0, path.lastIndexOf('/'));
     const filename = path.substr(path.lastIndexOf('/'));
 
     const tmpPath = `${kTmpFolder}/${pathToFile.replace(/\.\./gi, () => '.')}`;
+    const uglyTmpFile = `${tmpPath}${filename}_ugly.ts`;
+    const prettyTmpFile = `${tmpPath}${filename}.ts`;
 
     // Make sure folder exists in the temp space
     await fs.promises.mkdir(tmpPath, { recursive: true });
 
     // Write the raw, unlinted / prettified file contents to a temporary space.
-    await writeFileAsync(`${tmpPath}${filename}_ugly.ts`, data, {
+    await writeFileAsync(uglyTmpFile, data, {
       flag: 'w+',
     });
 
-    await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
-
-    // TODO:
-    // need to write to final output last, so it doesn't fail prettier / eslint.
+    // Run eslint --fix
+    await exec(`${kWfReactFolder}/node_modules/.bin/eslint --fix ${uglyTmpFile}`);
 
     // Run prettier
-    await exec(
-      `${kWfReactFolder}/node_modules/.bin/prettier ${tmpPath}${filename}_ugly.ts > ${path}`,
-    );
+    await exec(`${kWfReactFolder}/node_modules/.bin/prettier ${uglyTmpFile} > ${prettyTmpFile}`);
 
-    // Run eslint --fix
-    await exec(`${kWfReactFolder}/node_modules/.bin/eslint --fix ${path}`);
+    // Return a function to finalize the output from TMP.
+    return async () => {
+      // Write to final output
+      await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
+      exec(`mv ${prettyTmpFile} ${path}`);
+    };
   } catch (error) {
     throw new Error(`Error writeAndPrettify ${path}: ${error}`);
   }

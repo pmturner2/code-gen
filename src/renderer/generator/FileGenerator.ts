@@ -25,7 +25,7 @@ function getServiceCategory(serviceIdentifier: string): string {
   return serviceIdentifier.split('.')[0];
 }
 
-async function updateAppTypes(serviceIdentifier: string): Promise<void> {
+async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
   const categoryMapping = new Map<string, string>([
     ['ServiceTypes', 'Service'],
     ['DomainStoreTypes', 'Domain'],
@@ -56,8 +56,8 @@ async function updateAppTypes(serviceIdentifier: string): Promise<void> {
       newLines.push(line);
     }
   });
-  const result = newLines.join(';');
-  writeAndPrettify(result, kAppTypesPath);
+  const output = newLines.join(';');
+  return writeAndPrettify(output, kAppTypesPath);
 }
 
 async function generateImport(item: IInjectable, includeConcrete?: boolean): Promise<string> {
@@ -84,7 +84,7 @@ async function updateDependencyContainer(
   item: IInjectable,
   filePath: string,
   forceInit: boolean,
-): Promise<void> {
+): Promise<() => void> {
   const lines = await getTokensFromFile(filePath);
 
   let newImport = await generateImport(item, true);
@@ -118,8 +118,8 @@ async function updateDependencyContainer(
     }
     newLines.push(line);
   });
-  const result = newLines.join(';');
-  writeAndPrettify(result, filePath);
+  const output = newLines.join(';');
+  return writeAndPrettify(output, filePath);
 }
 
 /**
@@ -131,7 +131,7 @@ async function updateDependencyContainer(
 async function writeInjectableClass(
   item: INewInjectable,
   fileTemplateFilename: string,
-): Promise<void> {
+): Promise<() => void> {
   const dependencyMembers = await getDependencyReplacement(
     'templates/snippets/DependencyMember._ts',
     item,
@@ -165,7 +165,7 @@ async function writeInjectableClass(
   const result = replaceTokens(template, tokens);
 
   // Write output
-  writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
+  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
 }
 
 /**
@@ -257,14 +257,21 @@ async function generateInjectableClass(
   forceDependencyInit: boolean,
 ): Promise<void> {
   try {
+    const finalizeFunctions = new Array<() => void>();
+
     // Add a ServiceIdentifier for the new Injectable to `Types.ts`
-    await updateAppTypes(item.serviceIdentifier);
+    finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
 
     // Adds a call to `bind` the injectable in the DependencyContainer class
-    await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit);
+    finalizeFunctions.push(
+      await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit),
+    );
 
     // Generates the new class from the template
-    await writeInjectableClass(item, fileTemplate);
+    finalizeFunctions.push(await writeInjectableClass(item, fileTemplate));
+
+    // Iterate over functions to finalize (write) output to `wf-react` repo
+    finalizeFunctions.forEach(async f => await f());
   } catch (error) {
     throw new Error(`Error generating injectable ${item.name}: ${error}`);
   }
