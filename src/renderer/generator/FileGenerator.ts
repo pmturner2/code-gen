@@ -1,4 +1,5 @@
 import {
+  InjectableCategory,
   kAppTypesPath,
   kDomainStoreDependencyContainerPath,
   kDomainStoreTemplateFile,
@@ -203,13 +204,27 @@ async function getDependencyReplacement(
     .join('\n');
 }
 
+export async function generateInjectableClass(
+  item: INewInjectable,
+  category: InjectableCategory,
+): Promise<void> {
+  switch (category) {
+    case 'Service':
+      return generateService(item);
+    case 'DomainStore':
+      return generateDomainStore(item);
+    case 'ScreenStore':
+      return generateScreenStore(item);
+  }
+}
+
 /**
  * Generates a new `Service` class, and properly updates the `wf-react` codebase
  *
  * @param item params to generate from
  */
 export async function generateService(item: INewInjectable): Promise<void> {
-  return generateInjectableClass(
+  return internalGenerateInjectableClass(
     item,
     kServiceDependencyContainerPath,
     kServiceTemplateFile,
@@ -223,7 +238,7 @@ export async function generateService(item: INewInjectable): Promise<void> {
  * @param item params to generate from
  */
 export async function generateDomainStore(item: INewInjectable): Promise<void> {
-  return generateInjectableClass(
+  return internalGenerateInjectableClass(
     item,
     kDomainStoreDependencyContainerPath,
     kDomainStoreTemplateFile,
@@ -237,7 +252,7 @@ export async function generateDomainStore(item: INewInjectable): Promise<void> {
  * @param item params to generate from
  */
 export async function generateScreenStore(item: INewInjectable): Promise<void> {
-  return generateInjectableClass(
+  return internalGenerateInjectableClass(
     item,
     kScreenStoreDependencyContainerPath,
     kScreenStoreTemplateFile,
@@ -250,7 +265,7 @@ export async function generateScreenStore(item: INewInjectable): Promise<void> {
  *
  * @param item params to generate from
  */
-async function generateInjectableClass(
+async function internalGenerateInjectableClass(
   item: INewInjectable,
   dependencyContainerPath: string,
   fileTemplate: string,

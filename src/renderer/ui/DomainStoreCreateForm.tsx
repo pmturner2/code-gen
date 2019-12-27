@@ -5,13 +5,13 @@ interface IProps {
   navigate: (route: string) => void;
 }
 
-export class ServiceCreateForm extends React.Component<IProps> {
+export class DomainStoreCreateForm extends React.Component<IProps> {
   render() {
     return (
       <InjectableCreateForm
         navigate={this.props.navigate}
-        dependencyCategories={['Service']}
-        category="Service"
+        dependencyCategories={['Service', 'DomainStore']}
+        category="DomainStore"
       />
     );
   }

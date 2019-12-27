@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { IInjectable } from '../Types';
+import { DomainStoreCreateForm } from './DomainStoreCreateForm';
 import { HomeContent } from './HomeContent';
 import { MainPanel } from './MainPanel';
+import { ScreenStoreCreateForm } from './ScreenStoreCreateForm';
 import { ServiceCreateForm } from './ServiceCreateForm';
 import { ISidePanelOption, SidePanel } from './sidepanel/SidePanel';
 
@@ -38,7 +40,12 @@ export class App extends React.Component<{}, IState> {
   }
 
   private sidePanelOptions(): ISidePanelOption[] {
-    return [this.createSidePanelOption('Home'), this.createSidePanelOption('Generate Service')];
+    return [
+      this.createSidePanelOption('Home'),
+      this.createSidePanelOption('Generate Service'),
+      this.createSidePanelOption('Generate Domain Store'),
+      this.createSidePanelOption('Generate Screen Store'),
+    ];
   }
 
   private createSidePanelOption(title: string): ISidePanelOption {
@@ -63,6 +70,18 @@ export class App extends React.Component<{}, IState> {
         this.setState({
           mainContent: <ServiceCreateForm navigate={this.navigateTo} />,
           selectedOptionId: 'Generate Service',
+        });
+        break;
+      case 'Generate Domain Store':
+        this.setState({
+          mainContent: <DomainStoreCreateForm navigate={this.navigateTo} />,
+          selectedOptionId: 'Generate Domain Store',
+        });
+        break;
+      case 'Generate Screen Store':
+        this.setState({
+          mainContent: <ScreenStoreCreateForm navigate={this.navigateTo} />,
+          selectedOptionId: 'Generate Screen Store',
         });
         break;
     }

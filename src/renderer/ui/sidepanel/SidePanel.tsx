@@ -7,7 +7,7 @@ export interface ISidePanelOption {
   onClick: () => void;
 }
 
-export interface IProps {
+interface IProps {
   selectedOptionId: string;
   options: ISidePanelOption[];
 }

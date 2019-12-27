@@ -28,3 +28,5 @@ export const kServiceDependencyContainerPath = `${kWfReactSrcFolder}/app/Depende
 export const kDomainStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.DomainStores.ts`;
 export const kScreenStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.ScreenStores.ts`;
 export const kAppTypesPath = `${kWfReactSrcFolder}/app/Types.ts`;
+
+export type InjectableCategory = 'Service' | 'DomainStore' | 'ScreenStore';

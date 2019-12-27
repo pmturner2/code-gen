@@ -1,4 +1,5 @@
 import {
+  InjectableCategory,
   kDomainStoreDependencyContainerPath,
   kScreenStoreDependencyContainerPath,
   kServiceDependencyContainerPath,
@@ -20,7 +21,10 @@ export function getBoundInjectables(fileLines: string[], importMap: ImportMap): 
   const bindLines = fileLines.filter((l: string) => l.startsWith('bind'));
   const result = bindLines
     .map((line: string) => {
-      const tokens = line.split(/bind|[<>;\)\( ,]/g).filter((token: string) => !!token);
+      const tokens = line
+        .trim()
+        .split(/bind|[<>;\)\( ,\n]/g)
+        .filter((token: string) => !!token);
       if (tokens.length === 3) {
         return {
           importPath: importMap.get(tokens[0]) || 'UNKNOWN',
@@ -28,8 +32,9 @@ export function getBoundInjectables(fileLines: string[], importMap: ImportMap): 
           name: tokens[1],
           serviceIdentifier: tokens[2],
         };
+      } else {
+        throw new Error('Error parsing line: ' + line);
       }
-      return null;
     })
     .sort((a: IInjectable, b: IInjectable) => (a.serviceIdentifier < b.serviceIdentifier ? -1 : 1));
   return result;
@@ -49,7 +54,6 @@ export async function getBoundInjectablesFromFile(
   try {
     // Lines in the file
     const lines = await getTokensFromFile(inputPath, true);
-
     // Maps each imported object to its file
     const importMap = getImportMap(lines);
     return getBoundInjectables(lines, importMap);
@@ -58,26 +62,39 @@ export async function getBoundInjectablesFromFile(
   }
 }
 
-/**
- * Gets array of `IInjectable` files for `Service` classes
- */
-export async function getServices(): Promise<IInjectable[]> {
-  const result = await getBoundInjectablesFromFile(kServiceDependencyContainerPath);
-  return result;
+export async function getAvailableInjectables(
+  category: InjectableCategory,
+): Promise<IInjectable[]> {
+  switch (category) {
+    case 'Service':
+      return await getBoundInjectablesFromFile(kServiceDependencyContainerPath);
+    case 'DomainStore':
+      return await getBoundInjectablesFromFile(kDomainStoreDependencyContainerPath);
+    case 'ScreenStore':
+      return await getBoundInjectablesFromFile(kScreenStoreDependencyContainerPath);
+  }
 }
 
-/**
- * Gets array of `IInjectable` files for `DomainStore` classes
- */
-export async function getDomainStores(): Promise<IInjectable[]> {
-  const result = await getBoundInjectablesFromFile(kDomainStoreDependencyContainerPath);
-  return result;
-}
+// /**
+//  * Gets array of `IInjectable` files for `Service` classes
+//  */
+// export async function getServices(): Promise<IInjectable[]> {
+//   const result = await getBoundInjectablesFromFile(kServiceDependencyContainerPath);
+//   return result;
+// }
 
-/**
- * Gets array of `IInjectable` files for `Screen/UIStore` classes
- */
-export async function getScreenStores(): Promise<IInjectable[]> {
-  const result = await getBoundInjectablesFromFile(kScreenStoreDependencyContainerPath);
-  return result;
-}
+// /**
+//  * Gets array of `IInjectable` files for `DomainStore` classes
+//  */
+// export async function getDomainStores(): Promise<IInjectable[]> {
+//   const result = await getBoundInjectablesFromFile(kDomainStoreDependencyContainerPath);
+//   return result;
+// }
+
+// /**
+//  * Gets array of `IInjectable` files for `Screen/UIStore` classes
+//  */
+// export async function getScreenStores(): Promise<IInjectable[]> {
+//   const result = await getBoundInjectablesFromFile(kScreenStoreDependencyContainerPath);
+//   return result;
+// }
