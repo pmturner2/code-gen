@@ -74,27 +74,3 @@ export async function getAvailableInjectables(
       return await getBoundInjectablesFromFile(kScreenStoreDependencyContainerPath);
   }
 }
-
-// /**
-//  * Gets array of `IInjectable` files for `Service` classes
-//  */
-// export async function getServices(): Promise<IInjectable[]> {
-//   const result = await getBoundInjectablesFromFile(kServiceDependencyContainerPath);
-//   return result;
-// }
-
-// /**
-//  * Gets array of `IInjectable` files for `DomainStore` classes
-//  */
-// export async function getDomainStores(): Promise<IInjectable[]> {
-//   const result = await getBoundInjectablesFromFile(kDomainStoreDependencyContainerPath);
-//   return result;
-// }
-
-// /**
-//  * Gets array of `IInjectable` files for `Screen/UIStore` classes
-//  */
-// export async function getScreenStores(): Promise<IInjectable[]> {
-//   const result = await getBoundInjectablesFromFile(kScreenStoreDependencyContainerPath);
-//   return result;
-// }

@@ -3,7 +3,7 @@ import { InjectableCategory } from '../Constants';
 import { generateInjectableClass } from '../generator/FileGenerator';
 import { getAvailableInjectables } from '../generator/InjectableUtils';
 import { uppercaseFirstLetter } from '../generator/Utils';
-import { showError, showInfo } from '../Logging';
+import { showError, showInfoAlert } from '../Logging';
 import { IInjectable } from '../Types';
 import { DependencySelector } from './common/DependencySelector';
 import { FormSection } from './common/FormSection';
@@ -139,7 +139,7 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
         },
         category,
       );
-      showInfo(`Successfully generated ${category}: ${name}`);
+      showInfoAlert(`Successfully generated ${category}: ${name}`);
     } catch (error) {
       showError(error);
     }

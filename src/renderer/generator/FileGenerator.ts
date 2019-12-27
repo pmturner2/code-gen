@@ -9,6 +9,7 @@ import {
   kServiceTemplateFile,
   kWfReactSrcFolder,
 } from '../Constants';
+import { logInfo } from '../Logging';
 import { IInjectable, INewInjectable } from '../Types';
 import {
   getTokensFromFile,
@@ -275,18 +276,23 @@ async function internalGenerateInjectableClass(
     const finalizeFunctions = new Array<() => void>();
 
     // Add a ServiceIdentifier for the new Injectable to `Types.ts`
+    logInfo(`Adding ${item.serviceIdentifier} to App Types`);
     finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
 
     // Adds a call to `bind` the injectable in the DependencyContainer class
+    logInfo(`Adding ${item.serviceIdentifier} to Dependency Container`);
     finalizeFunctions.push(
       await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit),
     );
 
     // Generates the new class from the template
+    logInfo(`Writing class file for ${item.importPath}`);
     finalizeFunctions.push(await writeInjectableClass(item, fileTemplate));
 
     // Iterate over functions to finalize (write) output to `wf-react` repo
+    logInfo(`Copying and finalizing output`);
     finalizeFunctions.forEach(async f => await f());
+    logInfo(`Done generating injectable ${item.name}`);
   } catch (error) {
     throw new Error(`Error generating injectable ${item.name}: ${error}`);
   }
