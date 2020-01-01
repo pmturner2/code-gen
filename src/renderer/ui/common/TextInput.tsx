@@ -1,27 +1,30 @@
+import { FormControl, Input, InputLabel } from '@material-ui/core';
 import React from 'react';
 
 interface IProps {
   label: string;
   name: string;
+  value: string;
   placeholder: string;
+  className?: string;
   onChange: (name: string, value: string) => void;
 }
 
 export class TextInput extends React.Component<IProps> {
   render() {
-    const { label, name, placeholder } = this.props;
+    const { className, label, name, placeholder, value } = this.props;
 
     return (
-      <div className="text-input-row">
-        <label className="text-input-label">{label}</label>
-        <input
-          className="text-input"
+      <FormControl className={`element ${className}`}>
+        <InputLabel>{label}</InputLabel>
+        <Input
           type="text"
           name={name}
           placeholder={placeholder}
           onChange={this.handleChange}
+          value={value}
         />
-      </div>
+      </FormControl>
     );
   }
 

@@ -1,3 +1,4 @@
+import { Button, Typography } from '@material-ui/core';
 import * as React from 'react';
 import { InjectableCategory } from '../Constants';
 import { generateInjectableClass } from '../generator/FileGenerator';
@@ -11,7 +12,8 @@ import { TextInput } from './common/TextInput';
 
 interface IState {
   availableDependencies: Map<string, Map<string, IInjectable>>;
-  dependencies: Map<string, boolean>;
+  dependencies: string[];
+  hasEditedPath: boolean;
   name: string;
   path: string;
 }
@@ -28,7 +30,8 @@ interface IProps {
 export class InjectableCreateForm extends React.Component<IProps, IState> {
   state: IState = {
     availableDependencies: null,
-    dependencies: new Map(),
+    dependencies: [],
+    hasEditedPath: false,
     name: '',
     path: '',
   };
@@ -44,22 +47,24 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
 
     const { category } = this.props;
     return (
-      <form onSubmit={this.handleSubmit}>
-        <FormSection title={`Create ${category}`}>
+      <form onSubmit={this.handleSubmit} className="main-content">
+        <FormSection title={`Generate ${category}`}>
           <TextInput
             label="Name"
             name="Name"
             placeholder={`e.g. Game for Game${category}`}
             onChange={this.handleTextChange}
+            value={this.state.name}
           />
           <TextInput
             label="Path"
             name="Path"
             placeholder="e.g. game for src/services/game"
             onChange={this.handleTextChange}
+            value={this.state.path}
           />
         </FormSection>
-        <FormSection title="Dependencies" collapsible={true}>
+        <FormSection title="Dependencies">
           {this.props.dependencyCategories.map(category => {
             const availableDependencies = Array.from(
               this.state.availableDependencies.get(category).values(),
@@ -68,7 +73,7 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
             return (
               <DependencySelector
                 category={category}
-                selectedItems={this.state.dependencies}
+                selectedItems={this.getSelectedDependencies(category)}
                 items={availableDependencies}
                 onChange={this.handleDependencyChange}
                 key={category}
@@ -77,11 +82,38 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
           })}
         </FormSection>
         {this.props.children}
-        <FormSection title="Submit">
-          <input type="submit" name="Submit" value={`Create ${category}`} />
+        <FormSection title={`Create a new ${category}`}>
+          {this.state.name && this.state.path && (
+            <Typography variant="subtitle2" className="element">{`${this.getFullImportPath(
+              this.state.path,
+              this.props.category,
+            )}/${this.getClassName(this.state.name, this.props.category)}.ts`}</Typography>
+          )}
+          {this.state.name && this.state.path && (
+            <Typography variant="subtitle2" className="element">{`${this.getFullImportPath(
+              this.state.path,
+              this.props.category,
+            )}/${this.getInterfaceName(this.state.name, this.props.category)}.ts`}</Typography>
+          )}
+          <Button
+            type="submit"
+            name="Submit"
+            value="Create"
+            fullWidth={false}
+            className="form-submit element"
+            variant="contained"
+            color="primary"
+          >
+            Create
+          </Button>
         </FormSection>
       </form>
     );
+  }
+
+  private getSelectedDependencies(category: InjectableCategory): string[] {
+    const availableForCategory = this.state.availableDependencies.get(category);
+    return this.state.dependencies.filter(dep => availableForCategory.get(dep));
   }
 
   private fetchAvailableDependencies = async () => {
@@ -113,33 +145,29 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
         return;
       }
 
-      const dependencies = Array.from(this.state.dependencies.keys())
-        .filter(k => this.state.dependencies.get(k))
-        .map(serviceIdentifier => {
-          for (const category of this.props.dependencyCategories) {
-            const depsForCategory = this.state.availableDependencies.get(category);
-            const result = depsForCategory.get(serviceIdentifier);
-            if (result) {
-              return result;
-            }
+      const dependencies = this.state.dependencies.map(serviceIdentifier => {
+        for (const category of this.props.dependencyCategories) {
+          const depsForCategory = this.state.availableDependencies.get(category);
+          const result = depsForCategory.get(serviceIdentifier);
+          if (result) {
+            return result;
           }
-          return null;
-        });
+        }
+        return null;
+      });
 
       const { category } = this.props;
-      const name = uppercaseFirstLetter(this.state.name);
-      const importPath = this.state.path || this.state.name;
       await generateInjectableClass(
         {
           dependencies,
-          importPath: this.getFullImportPath(importPath, category),
-          interfaceName: this.getInterfaceName(name, category),
-          name: this.getClassName(name, category),
-          serviceIdentifier: this.getServiceIdentifier(name, category),
+          importPath: this.getFullImportPath(this.state.path, category),
+          interfaceName: this.getInterfaceName(this.state.name, category),
+          name: this.getClassName(this.state.name, category),
+          serviceIdentifier: this.getServiceIdentifier(this.state.name, category),
         },
         category,
       );
-      showInfoAlert(`Successfully generated ${category}: ${name}`);
+      showInfoAlert(`Successfully generated ${category}: ${this.state.name}`);
     } catch (error) {
       showError(error);
     }
@@ -150,11 +178,11 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
   private getFullImportPath(importPath: string, category: InjectableCategory): string {
     switch (category) {
       case 'Service':
-        return `services/${importPath.toLowerCase()}`;
+        return `services/${importPath}`;
       case 'DomainStore':
-        return `domains/${importPath.toLowerCase()}`;
+        return `domains/${importPath}`;
       case 'ScreenStore':
-        return `screens/${importPath.toLowerCase()}`;
+        return `screens/${importPath}`;
     }
   }
 
@@ -189,20 +217,18 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
     }
   }
 
-  private handleDependencyChange = (serviceIdentifier: string, isSelected: boolean) => {
-    const dependencies = this.state.dependencies;
-    const dependency = this.state.dependencies.get(serviceIdentifier);
-    if ((dependency && !isSelected) || (!dependency && isSelected)) {
-      dependencies.set(serviceIdentifier, isSelected);
-      this.setState({ dependencies });
-    }
+  private handleDependencyChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    this.setState({ dependencies: event.target.value as string[] });
   };
 
   private handleTextChange = (key: string, value: string) => {
     if (key === 'Name') {
-      this.setState({ name: value });
+      if (!this.state.hasEditedPath) {
+        this.setState({ path: value.toLowerCase() });
+      }
+      this.setState({ name: uppercaseFirstLetter(value) });
     } else if (key === 'Path') {
-      this.setState({ path: value });
+      this.setState({ path: value.toLowerCase(), hasEditedPath: true });
     }
   };
 }

@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { IInjectable } from '../Types';
+import { AppHeader } from './AppHeader';
 import { DomainStoreCreateForm } from './DomainStoreCreateForm';
 import { HomeContent } from './HomeContent';
 import { MainPanel } from './MainPanel';
 import { ScreenStoreCreateForm } from './ScreenStoreCreateForm';
 import { ServiceCreateForm } from './ServiceCreateForm';
-import { ISidePanelOption, SidePanel } from './sidepanel/SidePanel';
+import { ISidePanelOption, ISidePanelSection, SidePanel } from './sidepanel/SidePanel';
 
 interface IState {
   mainContent: React.ReactElement<any>;
@@ -30,21 +31,27 @@ export class App extends React.Component<{}, IState> {
   render() {
     return (
       <div className="app-root">
-        <SidePanel
-          selectedOptionId={this.state.selectedOptionId}
-          options={this.sidePanelOptions()}
-        />
-        <MainPanel>{this.state.mainContent}</MainPanel>
+        <AppHeader />
+        <main className="app-content">
+          <SidePanel sections={this.sidePanelSections()} />
+          <MainPanel>{this.state.mainContent}</MainPanel>
+        </main>
       </div>
     );
   }
 
-  private sidePanelOptions(): ISidePanelOption[] {
+  private sidePanelSections(): ISidePanelSection[] {
     return [
-      this.createSidePanelOption('Home'),
-      this.createSidePanelOption('Generate Service'),
-      this.createSidePanelOption('Generate Domain Store'),
-      this.createSidePanelOption('Generate Screen Store'),
+      {
+        options: [this.createSidePanelOption('Home')],
+      },
+      {
+        options: [
+          this.createSidePanelOption('Generate Service'),
+          this.createSidePanelOption('Generate Domain Store'),
+          this.createSidePanelOption('Generate Screen Store'),
+        ],
+      },
     ];
   }
 

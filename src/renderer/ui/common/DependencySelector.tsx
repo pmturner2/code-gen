@@ -1,33 +1,44 @@
+import {
+  Checkbox,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Select,
+} from '@material-ui/core';
 import React from 'react';
 import { InjectableCategory } from '../../Constants';
 import { IInjectable } from '../../Types';
-import { DependencySelectorItem } from './DependencySelectorItem';
 
 interface IProps {
   category: InjectableCategory;
   items: IInjectable[];
-  selectedItems: Map<string, boolean>;
-  onChange: (serviceIdentifier: string, isSelected: boolean) => void;
+  selectedItems: string[];
+  onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export class DependencySelector extends React.Component<IProps> {
   render() {
-    const { category, items, onChange } = this.props;
-
+    const { category, items, selectedItems, onChange } = this.props;
     return (
-      <React.Fragment>
-        <span className="header-text">{category}</span>
-        <ul>
+      <FormControl className="element">
+        <InputLabel id={`dependency-${category}-label`}>{`${category} Dependencies`}</InputLabel>
+        <Select
+          labelId={`dependency-${category}-label`}
+          id={`dependency-${category}`}
+          multiple
+          value={selectedItems}
+          onChange={onChange}
+          renderValue={(selected: string[]) => selected.join(', ')}
+        >
           {items.map(item => (
-            <DependencySelectorItem
-              isSelected={!!this.props.selectedItems.get(item.serviceIdentifier)}
-              key={item.serviceIdentifier}
-              item={item}
-              onChange={onChange}
-            />
+            <MenuItem key={item.serviceIdentifier} value={item.serviceIdentifier}>
+              <Checkbox checked={selectedItems.indexOf(item.serviceIdentifier) > -1} />
+              <ListItemText primary={item.serviceIdentifier} />
+            </MenuItem>
           ))}
-        </ul>
-      </React.Fragment>
+        </Select>
+      </FormControl>
     );
   }
 }

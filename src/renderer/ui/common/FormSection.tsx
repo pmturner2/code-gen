@@ -1,41 +1,21 @@
+import { Card, Typography } from '@material-ui/core';
 import React from 'react';
 
 interface IProps {
-  title: string;
+  title?: string;
   className?: string;
-  collapsible?: boolean;
 }
 
-interface IState {
-  isOpen: boolean;
-}
-
-export class FormSection extends React.Component<IProps, IState> {
-  state = {
-    isOpen: !this.props.collapsible,
-  };
-
+export class FormSection extends React.Component<IProps> {
   render() {
-    const { title, children, className, collapsible = false } = this.props;
-
-    const childClassName = this.state.isOpen ? 'children' : 'children';
-    const headerClassName = collapsible ? 'collapsible header' : 'header';
+    const { title, className, children } = this.props;
     return (
-      <div className={`section ${className}`}>
-        <div className={headerClassName} onClick={collapsible ? this.handleClick : null}>
-          {collapsible ? <span className="header-icon">{this.renderCollapsibleIcon()}</span> : null}
-          <span className="header-text">{title}</span>
+      <Card className={`section ${className}`}>
+        <div className={'header'}>
+          {title ? <Typography variant="subtitle1">{title}</Typography> : null}
         </div>
-        <div className={childClassName}>{this.state.isOpen ? children : null}</div>
-      </div>
+        <div className={'children'}>{children}</div>
+      </Card>
     );
-  }
-
-  handleClick = () => {
-    this.setState({ isOpen: !this.state.isOpen });
-  };
-
-  renderCollapsibleIcon() {
-    return this.state.isOpen ? ' - ' : ' + ';
   }
 }

@@ -1,5 +1,10 @@
+import { createStyles, Divider, Drawer, List, makeStyles, Theme } from '@material-ui/core';
 import React from 'react';
 import { SidePanelOption } from './SidePanelOption';
+
+export interface ISidePanelSection {
+  options: ISidePanelOption[];
+}
 
 export interface ISidePanelOption {
   id: string;
@@ -8,31 +13,53 @@ export interface ISidePanelOption {
 }
 
 interface IProps {
-  selectedOptionId: string;
-  options: ISidePanelOption[];
+  sections: ISidePanelSection[];
 }
+
+const kDrawerWidth = 240;
+
+const useStyles = makeStyles((theme?: Theme) =>
+  createStyles({
+    drawer: {
+      width: kDrawerWidth,
+      flexShrink: 0,
+    },
+    drawerPaper: {
+      width: kDrawerWidth,
+    },
+    toolbar: theme.mixins.toolbar,
+  }),
+);
 
 /**
  * Panel on the left side of the screen with options
  */
-export class SidePanel extends React.Component<IProps> {
-  render() {
-    return (
-      <div className="sidebar">
-        {this.props.options.map(option => (
-          <SidePanelOption
-            id={option.id}
-            key={option.id}
-            isSelected={this.isSelected(option.id)}
-            title={option.title}
-            onClick={option.onClick}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  private isSelected(id: string): boolean {
-    return this.props.selectedOptionId === id;
-  }
-}
+export const SidePanel: React.FunctionComponent<IProps> = props => {
+  const classes = useStyles(props);
+  return (
+    <Drawer
+      variant="permanent"
+      className={classes.drawer}
+      classes={{
+        paper: classes.drawerPaper,
+      }}
+    >
+      <div className={classes.toolbar} />
+      {props.sections.map((section, index) => (
+        <React.Fragment key={`${index}`}>
+          <List>
+            {section.options.map(option => (
+              <SidePanelOption
+                id={option.id}
+                key={option.id}
+                title={option.title}
+                onClick={option.onClick}
+              />
+            ))}
+          </List>
+          <Divider />
+        </React.Fragment>
+      ))}
+    </Drawer>
+  );
+};

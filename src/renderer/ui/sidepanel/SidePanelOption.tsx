@@ -1,10 +1,10 @@
+import { ListItem, ListItemText } from '@material-ui/core';
 import React from 'react';
 
 interface IProps {
   id: string;
   title: string;
   onClick: () => void;
-  isSelected?: boolean;
 }
 
 /**
@@ -12,13 +12,11 @@ interface IProps {
  */
 export class SidePanelOption extends React.Component<IProps> {
   render() {
-    const { title, isSelected } = this.props;
-    const className = isSelected ? 'sidebar-option selected' : 'sidebar-option';
+    const { title } = this.props;
     return (
-      <span className={className} onClick={this.props.onClick}>
-        <div className="selection-mark" />
-        {title}
-      </span>
+      <ListItem button key={title} onClick={this.props.onClick}>
+        <ListItemText primary={title} />
+      </ListItem>
     );
   }
 }

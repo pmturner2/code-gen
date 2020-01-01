@@ -1,25 +1,24 @@
 .body {
-  background-color: rgb(7, 9, 13);
   margin: 0px;
   padding: 0px;
 }
 
 .app {
-  background-color: rgb(7, 9, 13);
-  color: rgb(179, 179, 179);
-  font-family: 'Helvetica';
-  font-weight: 100;
-  font-size: 15px;
   margin: 0px;
   padding: 0px;
 }
 
 .app-root {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1;
   margin: 0px;
   padding: 0px;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: row;
 }
 
 .checkbox {
@@ -27,63 +26,22 @@
 }
 
 .main {
-  background-image: linear-gradient(to bottom right, rgb(50, 63, 89), #000);
   display: flex;
   flex: 1;
 }
 
-.main * {
+.main-content {
   flex: 1;
+}
+
+.menu-button {
+  margin-right: 2;
 }
 
 .sidebar {
-  background-color: rgb(7, 9, 13);
-  display: flex;
-  flex-direction: column;
-  margin-right: 11px;
-  width: 200px;
-}
-
-.sidebar-option {
-  cursor: pointer;
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  font-weight: 100;
-  line-height: 40px;
-  max-height: 40px;
-  overflow: hidden;
-  vertical-align: middle;
-}
-
-.sidebar-option:hover {
-  color: #fff;
-  transition: color 0.5s;
-}
-
-.sidebar-option.selected {
-  // border-left: 3px solid rgb(125, 210, 101);
-  font-weight: 700;
-  color: #fff;
-  transition: color font-weight 0s;
-}
-
-.sidebar-option-title {
-  border: solid 1px white;
-}
-
-.sidebar-option .selection-mark {
-  height: 100%;
-  width: 3px;
-  margin-right: 20px;
-  transition: transform 0.3s;
-  transform: translateY(-40px);
-}
-
-.sidebar-option.selected .selection-mark {
-  background-color: rgb(125, 210, 101);
-  transition: transform 0.3s;
-  transform: translateY(0px);
+  // margin-right: 11px;
+  // width: 200px;
+  flex-shrink: 0;
 }
 
 ul {
@@ -99,21 +57,26 @@ ul li {
 
 form .section {
   display: flex;
+  margin: 10px;
   padding: 10px;
   flex-direction: column;
 }
 
+form .section .element:not(:first-child) {
+  margin-top: 10px;
+}
+
 form .section .header-text {
-  color: white;
+  // color: white;
   flex: 1;
-  font-weight: 700;
-  font-size: 24px;
+  // font-weight: 700;
+  // font-size: 24px;
 }
 
 form .section .header-icon {
-  color: white;
-  font-weight: 900;
-  font-size: 18px;
+  // color: white;
+  // font-weight: 900;
+  // font-size: 18px;
   max-width: 30px;
   width: 30px;
 }
@@ -132,29 +95,33 @@ form .section .header {
 
 form .section .children {
   display: flex;
-  flex: 1;
+  // flex: 1;
   flex-direction: column;
   padding-left: 10px;
 }
 
-form .text-input-row {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  margin-top: 10px;
+.form-submit {
+  width: 100px;
 }
 
-form .text-input-label {
-  color: white;
-  flex: 1;
-  font-family: 'Helvetica';
-  font-weight: 100;
-  font-size: 15px;
-  padding-right: 10px;
-  text-align: right;
-}
+// form .text-input-row {
+//   display: flex;
+//   flex: 1;
+//   flex-direction: row;
+//   margin-top: 10px;
+// }
 
-form .text-input {
-  margin-right: 30px;
-  flex: 3;
-}
+// form .text-input-label {
+//   // color: white;
+//   flex: 1;
+//   // font-family: 'Helvetica';
+//   // font-weight: 100;
+//   // font-size: 15px;
+//   padding-right: 10px;
+//   text-align: right;
+// }
+
+// form .text-input {
+//   margin-right: 30px;
+//   flex: 3;
+// }
