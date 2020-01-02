@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { IInjectable } from '../Types';
 import { AppHeader } from './AppHeader';
+import { DialogCoordinator } from './DialogCoordinator';
 import { DomainStoreCreateForm } from './DomainStoreCreateForm';
 import { HomeContent } from './HomeContent';
 import { MainPanel } from './MainPanel';
@@ -36,6 +37,7 @@ export class App extends React.Component<{}, IState> {
           <SidePanel sections={this.sidePanelSections()} />
           <MainPanel>{this.state.mainContent}</MainPanel>
         </main>
+        <DialogCoordinator />
       </div>
     );
   }

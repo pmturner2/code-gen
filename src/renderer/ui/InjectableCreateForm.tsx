@@ -145,6 +145,9 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
         return;
       }
 
+      // TODO: Should be a loading spinner
+      showInfoAlert(`Generating: ${this.state.name}`);
+
       const dependencies = this.state.dependencies.map(serviceIdentifier => {
         for (const category of this.props.dependencyCategories) {
           const depsForCategory = this.state.availableDependencies.get(category);
