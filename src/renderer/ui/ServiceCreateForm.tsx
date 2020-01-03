@@ -5,14 +5,12 @@ interface IProps {
   navigate: (route: string) => void;
 }
 
-export class ServiceCreateForm extends React.Component<IProps> {
-  render() {
-    return (
-      <InjectableCreateForm
-        navigate={this.props.navigate}
-        dependencyCategories={['Service']}
-        category="Service"
-      />
-    );
-  }
-}
+export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
+  return (
+    <InjectableCreateForm
+      navigate={props.navigate}
+      dependencyCategories={['Service']}
+      category="Service"
+    />
+  );
+};

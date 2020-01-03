@@ -36,6 +36,9 @@ async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
   const [category, serviceName] = serviceIdentifier.split('.');
   const lines = await getTokensFromFile(kAppTypesPath);
   const newLines: string[] = [];
+
+  const newEntry = `${serviceName}: '${categoryMapping.get(category)}.${serviceName}'`;
+
   lines.forEach(line => {
     if (line.includes(`const ${category} = `)) {
       const categorySection = [line.substr(0, line.indexOf('{') + 1)];
@@ -45,11 +48,11 @@ async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
         .map(entry => entry.trim())
         .filter(entry => entry);
       entries.forEach(entry => {
-        if (entry.includes(serviceName)) {
+        if (entry.includes(newEntry)) {
           throw new Error('ServiceIdentifier already exists');
         }
       });
-      entries.push(`${serviceName}: '${categoryMapping.get(category)}.${serviceName}'`);
+      entries.push(newEntry);
       entries.sort();
       categorySection.push(entries.join(','));
       categorySection.push(` }\n`);

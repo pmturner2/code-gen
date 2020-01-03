@@ -24,6 +24,48 @@ interface IProps {
   category: InjectableCategory;
 }
 
+function getFullImportPath(importPath: string, category: InjectableCategory): string {
+  switch (category) {
+    case 'Service':
+      return `services/${importPath}`;
+    case 'DomainStore':
+      return `domains/${importPath}`;
+    case 'ScreenStore':
+      return `screens/${importPath}`;
+  }
+}
+
+function getInterfaceName(name: string, category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return `I${name}Service`;
+    case 'DomainStore':
+    case 'ScreenStore':
+      return `I${name}Store`;
+  }
+}
+
+function getClassName(name: string, category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return `${name}Service`;
+    case 'DomainStore':
+    case 'ScreenStore':
+      return `${name}Store`;
+  }
+}
+
+function getServiceIdentifier(name: string, category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return `ServiceTypes.${name}`;
+    case 'DomainStore':
+      return `ScreenStoreTypes.${name}`;
+    case 'ScreenStore':
+      return `DomainStoreTypes.${name}`;
+  }
+}
+
 /**
  * Form for generating Service classes
  */
@@ -84,16 +126,16 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
         {this.props.children}
         <FormSection title={`Create a new ${category}`}>
           {this.state.name && this.state.path && (
-            <Typography variant="subtitle2" className="element">{`${this.getFullImportPath(
+            <Typography variant="subtitle2" className="element">{`${getFullImportPath(
               this.state.path,
               this.props.category,
-            )}/${this.getClassName(this.state.name, this.props.category)}.ts`}</Typography>
+            )}/${getClassName(this.state.name, this.props.category)}.ts`}</Typography>
           )}
           {this.state.name && this.state.path && (
-            <Typography variant="subtitle2" className="element">{`${this.getFullImportPath(
+            <Typography variant="subtitle2" className="element">{`${getFullImportPath(
               this.state.path,
               this.props.category,
-            )}/${this.getInterfaceName(this.state.name, this.props.category)}.ts`}</Typography>
+            )}/${getInterfaceName(this.state.name, this.props.category)}.ts`}</Typography>
           )}
           <Button
             type="submit"
@@ -163,74 +205,33 @@ export class InjectableCreateForm extends React.Component<IProps, IState> {
       await generateInjectableClass(
         {
           dependencies,
-          importPath: this.getFullImportPath(this.state.path, category),
-          interfaceName: this.getInterfaceName(this.state.name, category),
-          name: this.getClassName(this.state.name, category),
-          serviceIdentifier: this.getServiceIdentifier(this.state.name, category),
+          importPath: getFullImportPath(this.state.path, category),
+          interfaceName: getInterfaceName(this.state.name, category),
+          name: getClassName(this.state.name, category),
+          serviceIdentifier: getServiceIdentifier(this.state.name, category),
         },
         category,
       );
       showInfoAlert(`Successfully generated ${category}: ${this.state.name}`);
     } catch (error) {
-      showError(error);
+      showError(error.message ? error.message : error);
     }
 
     this.props.navigate('Home');
   };
 
-  private getFullImportPath(importPath: string, category: InjectableCategory): string {
-    switch (category) {
-      case 'Service':
-        return `services/${importPath}`;
-      case 'DomainStore':
-        return `domains/${importPath}`;
-      case 'ScreenStore':
-        return `screens/${importPath}`;
-    }
-  }
-
-  private getInterfaceName(name: string, category: InjectableCategory) {
-    switch (category) {
-      case 'Service':
-        return `I${name}Service`;
-      case 'DomainStore':
-      case 'ScreenStore':
-        return `I${name}Store`;
-    }
-  }
-
-  private getClassName(name: string, category: InjectableCategory) {
-    switch (category) {
-      case 'Service':
-        return `${name}Service`;
-      case 'DomainStore':
-      case 'ScreenStore':
-        return `${name}Store`;
-    }
-  }
-
-  private getServiceIdentifier(name: string, category: InjectableCategory) {
-    switch (category) {
-      case 'Service':
-        return `ServiceTypes.${name}`;
-      case 'DomainStore':
-        return `ScreenStoreTypes.${name}`;
-      case 'ScreenStore':
-        return `DomainStoreTypes.${name}`;
-    }
-  }
-
   private handleDependencyChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     this.setState({ dependencies: event.target.value as string[] });
   };
 
-  private handleTextChange = (key: string, value: string) => {
-    if (key === 'Name') {
+  private handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    if (name === 'Name') {
       if (!this.state.hasEditedPath) {
         this.setState({ path: value.toLowerCase() });
       }
       this.setState({ name: uppercaseFirstLetter(value) });
-    } else if (key === 'Path') {
+    } else if (name === 'Path') {
       this.setState({ path: value.toLowerCase(), hasEditedPath: true });
     }
   };

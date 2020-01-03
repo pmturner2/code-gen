@@ -1,6 +1,14 @@
-import { createStyles, Divider, Drawer, List, makeStyles, Theme } from '@material-ui/core';
+import {
+  createStyles,
+  Divider,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  makeStyles,
+  Theme,
+} from '@material-ui/core';
 import React from 'react';
-import { SidePanelOption } from './SidePanelOption';
 
 export interface ISidePanelSection {
   options: ISidePanelOption[];
@@ -49,12 +57,9 @@ export const SidePanel: React.FunctionComponent<IProps> = props => {
         <React.Fragment key={`${index}`}>
           <List>
             {section.options.map(option => (
-              <SidePanelOption
-                id={option.id}
-                key={option.id}
-                title={option.title}
-                onClick={option.onClick}
-              />
+              <ListItem button key={option.title} onClick={option.onClick}>
+                <ListItemText primary={option.title} />
+              </ListItem>
             ))}
           </List>
           <Divider />

@@ -2,47 +2,42 @@ import * as React from 'react';
 import { setErrorFunction, setInfoAlertFunction } from '../Logging';
 import { ErrorDialog, InfoDialog } from './Dialogs';
 
-interface IState {
-  // All dialogs, including those animating out.
-  dialogs: Map<string, React.ReactElement<any>>;
-
-  // Any dialogs that should be considered "open"
-  openDialogKeys: Set<string>;
+let nextDialogKey = 0;
+function getNextKey(): string {
+  return `${++nextDialogKey}`;
 }
 
-export class DialogCoordinator extends React.Component<{}, IState> {
-  private nextDialogKey: number = 0;
+function cloneMap<K, V>(map: Map<K, V>): Map<K, V> {
+  const result = new Map();
+  map.forEach((v, k) => {
+    result.set(k, v);
+  });
+  return result;
+}
 
-  state: IState = {
-    dialogs: new Map(),
-    openDialogKeys: new Set(),
-  };
+function cloneSet<V>(set: Set<V>): Set<V> {
+  const result = new Set<V>();
+  set.forEach(v => {
+    result.add(v);
+  });
+  return result;
+}
 
-  componentDidMount() {
-    setErrorFunction(this.showErrorDialog);
-    setInfoAlertFunction(this.showInfoDialog);
-  }
+export const DialogCoordinator: React.FunctionComponent = () => {
+  const [dialogs, setDialogs] = React.useState(new Map());
+  const [openDialogKeys, setOpenDialogKeys] = React.useState(new Set());
 
-  componentWillUnmount() {
-    setInfoAlertFunction(null);
-    setErrorFunction(null);
-  }
-
-  getNextKey(): string {
-    return `${++this.nextDialogKey}`;
-  }
-
-  showDialog = (element: React.ReactElement<any>): void => {
-    const key = this.getNextKey();
+  const showDialog = (element: React.ReactElement<any>): void => {
+    const key = getNextKey();
     const handleClose = () => {
-      this.state.openDialogKeys.delete(key);
-      this.setState({ openDialogKeys: this.state.openDialogKeys });
+      openDialogKeys.delete(key);
+      setOpenDialogKeys(cloneSet(openDialogKeys));
     };
 
     const onExited = () => {
-      if (!this.state.openDialogKeys.has(key)) {
-        this.state.dialogs.delete(key);
-        this.setState({ dialogs: this.state.dialogs });
+      if (!openDialogKeys.has(key)) {
+        dialogs.delete(key);
+        setDialogs(cloneMap(dialogs));
       }
     };
 
@@ -50,32 +45,31 @@ export class DialogCoordinator extends React.Component<{}, IState> {
       handleClose,
       onExited,
     });
-    this.state.dialogs.set(key, content);
-    this.state.openDialogKeys.add(key);
-    this.setState({
-      dialogs: this.state.dialogs,
-      openDialogKeys: this.state.openDialogKeys,
-    });
+    dialogs.set(key, content);
+    openDialogKeys.add(key);
+    setOpenDialogKeys(cloneSet(openDialogKeys));
+    setDialogs(cloneMap(dialogs));
   };
 
-  showErrorDialog = (message: string): void => {
-    this.showDialog(<ErrorDialog message={message} />);
+  const showErrorDialog = (message: string): void => {
+    showDialog(<ErrorDialog message={message} />);
   };
 
-  showInfoDialog = (message: string, title?: string): void => {
-    this.showDialog(<InfoDialog message={message} title={title} />);
+  const showInfoDialog = (message: string): void => {
+    showDialog(<InfoDialog message={message} title={undefined} />);
   };
 
-  render() {
-    return (
-      <React.Fragment>
-        {Array.from(this.state.dialogs.keys()).map(dialogKey =>
-          React.cloneElement(this.state.dialogs.get(dialogKey), {
-            key: dialogKey,
-            open: this.state.openDialogKeys.has(dialogKey),
-          }),
-        )}
-      </React.Fragment>
-    );
-  }
-}
+  setErrorFunction(showErrorDialog);
+  setInfoAlertFunction(showInfoDialog);
+
+  return (
+    <React.Fragment>
+      {Array.from(dialogs.keys()).map(dialogKey =>
+        React.cloneElement(dialogs.get(dialogKey), {
+          key: dialogKey,
+          open: openDialogKeys.has(dialogKey),
+        }),
+      )}
+    </React.Fragment>
+  );
+};

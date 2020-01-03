@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { IInjectable } from '../Types';
 import { AppHeader } from './AppHeader';
 import { DialogCoordinator } from './DialogCoordinator';
 import { DomainStoreCreateForm } from './DomainStoreCreateForm';
@@ -7,12 +6,10 @@ import { HomeContent } from './HomeContent';
 import { MainPanel } from './MainPanel';
 import { ScreenStoreCreateForm } from './ScreenStoreCreateForm';
 import { ServiceCreateForm } from './ServiceCreateForm';
-import { ISidePanelOption, ISidePanelSection, SidePanel } from './sidepanel/SidePanel';
+import { ISidePanelOption, ISidePanelSection, SidePanel } from './SidePanel';
 
 interface IState {
   mainContent: React.ReactElement<any>;
-  selectedOptionId: string;
-  services: IInjectable[];
 }
 
 export class App extends React.Component<{}, IState> {
@@ -20,8 +17,6 @@ export class App extends React.Component<{}, IState> {
     super(props);
     this.state = {
       mainContent: <HomeContent navigate={this.navigateTo} />,
-      selectedOptionId: 'Home',
-      services: new Array<IInjectable>(),
     };
   }
 
@@ -72,25 +67,21 @@ export class App extends React.Component<{}, IState> {
       case 'Home':
         this.setState({
           mainContent: <HomeContent navigate={this.navigateTo} />,
-          selectedOptionId: 'Home',
         });
         break;
       case 'Generate Service':
         this.setState({
           mainContent: <ServiceCreateForm navigate={this.navigateTo} />,
-          selectedOptionId: 'Generate Service',
         });
         break;
       case 'Generate Domain Store':
         this.setState({
           mainContent: <DomainStoreCreateForm navigate={this.navigateTo} />,
-          selectedOptionId: 'Generate Domain Store',
         });
         break;
       case 'Generate Screen Store':
         this.setState({
           mainContent: <ScreenStoreCreateForm navigate={this.navigateTo} />,
-          selectedOptionId: 'Generate Screen Store',
         });
         break;
     }
