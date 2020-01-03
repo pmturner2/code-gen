@@ -28,11 +28,12 @@ export class App extends React.Component<{}, IState> {
     return (
       <div className="app-root">
         <AppHeader />
-        <main className="app-content">
-          <SidePanel sections={this.sidePanelSections()} />
-          <MainPanel>{this.state.mainContent}</MainPanel>
-        </main>
-        <DialogCoordinator />
+        <DialogCoordinator>
+          <main className="app-content">
+            <SidePanel sections={this.sidePanelSections()} />
+            <MainPanel>{this.state.mainContent}</MainPanel>
+          </main>
+        </DialogCoordinator>
       </div>
     );
   }

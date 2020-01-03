@@ -146,3 +146,19 @@ export async function writeAndPrettify(data: string, path: string): Promise<() =
     throw new Error(`Error writeAndPrettify ${path}: ${error}`);
   }
 }
+
+export function cloneMap<K, V>(map: Map<K, V>): Map<K, V> {
+  const result = new Map();
+  map.forEach((v, k) => {
+    result.set(k, v);
+  });
+  return result;
+}
+
+export function cloneSet<V>(set: Set<V>): Set<V> {
+  const result = new Set<V>();
+  set.forEach(v => {
+    result.add(v);
+  });
+  return result;
+}

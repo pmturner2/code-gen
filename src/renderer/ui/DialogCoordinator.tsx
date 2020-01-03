@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { setErrorFunction, setInfoAlertFunction } from '../Logging';
+import { cloneMap, cloneSet } from '../generator/Utils';
 import { ErrorDialog, InfoDialog } from './Dialogs';
 
 let nextDialogKey = 0;
@@ -7,23 +7,16 @@ function getNextKey(): string {
   return `${++nextDialogKey}`;
 }
 
-function cloneMap<K, V>(map: Map<K, V>): Map<K, V> {
-  const result = new Map();
-  map.forEach((v, k) => {
-    result.set(k, v);
-  });
-  return result;
+interface IDialogCoordinator {
+  showError(message: string): void;
+  showInfo(message: string, title?: string): void;
 }
 
-function cloneSet<V>(set: Set<V>): Set<V> {
-  const result = new Set<V>();
-  set.forEach(v => {
-    result.add(v);
-  });
-  return result;
-}
+export const DialogCoordinatorContext = React.createContext<IDialogCoordinator | undefined>(
+  undefined,
+);
 
-export const DialogCoordinator: React.FunctionComponent = () => {
+export const DialogCoordinator: React.FunctionComponent = props => {
   const [dialogs, setDialogs] = React.useState(new Map());
   const [openDialogKeys, setOpenDialogKeys] = React.useState(new Set());
 
@@ -59,17 +52,20 @@ export const DialogCoordinator: React.FunctionComponent = () => {
     showDialog(<InfoDialog message={message} title={undefined} />);
   };
 
-  setErrorFunction(showErrorDialog);
-  setInfoAlertFunction(showInfoDialog);
+  const [dialogContext] = React.useState<IDialogCoordinator>({
+    showError: showErrorDialog,
+    showInfo: showInfoDialog,
+  });
 
   return (
-    <React.Fragment>
+    <DialogCoordinatorContext.Provider value={dialogContext}>
+      {props.children}
       {Array.from(dialogs.keys()).map(dialogKey =>
         React.cloneElement(dialogs.get(dialogKey), {
           key: dialogKey,
           open: openDialogKeys.has(dialogKey),
         }),
       )}
-    </React.Fragment>
+    </DialogCoordinatorContext.Provider>
   );
 };
