@@ -1,11 +1,9 @@
 import { Button, Typography } from '@material-ui/core';
 import * as React from 'react';
-import { useEffect } from 'react';
 import { InjectableCategory } from '../Constants';
 import { generateInjectableClass } from '../generator/FileGenerator';
 import { getAvailableInjectables } from '../generator/InjectableUtils';
 import { cloneMap, uppercaseFirstLetter } from '../generator/Utils';
-import { showError } from '../Logging';
 import { IInjectable } from '../Types';
 import { DependencySelector } from './common/DependencySelector';
 import { FormSection } from './common/FormSection';
@@ -78,22 +76,9 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
     return dependencies.filter(dep => availableForCategory.get(dep));
   }
 
-  const fetchAvailableDependencies = async () => {
-    const availableDependencies = new Map<string, Map<string, IInjectable>>();
-    for (const category of props.dependencyCategories) {
-      const dependenciesForCategory = new Map<string, IInjectable>();
-      const injectables = await getAvailableInjectables(category);
-      injectables.forEach(injectable => {
-        dependenciesForCategory.set(injectable.serviceIdentifier, injectable);
-      });
-      availableDependencies.set(category, dependenciesForCategory);
-    }
-    setAvailableDependencies(cloneMap(availableDependencies));
-  };
-
   function validateFormItem(name: string, value: string) {
     if (!value) {
-      showError('Required param missing: ' + name);
+      dialogCoordinator.showError('Required param missing: ' + name);
       return false;
     }
     return true;
@@ -157,7 +142,20 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
     }
   };
 
-  useEffect(() => {
+  const fetchAvailableDependencies = async () => {
+    const availableDependencies = new Map<string, Map<string, IInjectable>>();
+    for (const category of props.dependencyCategories) {
+      const dependenciesForCategory = new Map<string, IInjectable>();
+      const injectables = await getAvailableInjectables(category);
+      injectables.forEach(injectable => {
+        dependenciesForCategory.set(injectable.serviceIdentifier, injectable);
+      });
+      availableDependencies.set(category, dependenciesForCategory);
+    }
+    setAvailableDependencies(cloneMap(availableDependencies));
+  };
+
+  React.useEffect(() => {
     fetchAvailableDependencies();
   }, []);
 
