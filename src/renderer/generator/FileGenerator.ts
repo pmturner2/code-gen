@@ -9,8 +9,7 @@ import {
   kServiceTemplateFile,
   kWfReactSrcFolder,
 } from '../Constants';
-import { logInfo } from '../Logging';
-import { IInjectable, INewInjectable } from '../Types';
+import { IInjectable, INewInjectable, IProgressStep, ProgressStepStatus } from '../Types';
 import {
   getTokensFromFile,
   lowercaseFirstLetter,
@@ -211,14 +210,15 @@ async function getDependencyReplacement(
 export async function generateInjectableClass(
   item: INewInjectable,
   category: InjectableCategory,
+  onProgress: (progress: IProgressStep[]) => void,
 ): Promise<void> {
   switch (category) {
     case 'Service':
-      return generateService(item);
+      return generateService(item, onProgress);
     case 'DomainStore':
-      return generateDomainStore(item);
+      return generateDomainStore(item, onProgress);
     case 'ScreenStore':
-      return generateScreenStore(item);
+      return generateScreenStore(item, onProgress);
   }
 }
 
@@ -227,12 +227,16 @@ export async function generateInjectableClass(
  *
  * @param item params to generate from
  */
-export async function generateService(item: INewInjectable): Promise<void> {
+export async function generateService(
+  item: INewInjectable,
+  onProgress: (progress: IProgressStep[]) => void,
+): Promise<void> {
   return internalGenerateInjectableClass(
     item,
     kServiceDependencyContainerPath,
     kServiceTemplateFile,
     false,
+    onProgress,
   );
 }
 
@@ -241,12 +245,16 @@ export async function generateService(item: INewInjectable): Promise<void> {
  *
  * @param item params to generate from
  */
-export async function generateDomainStore(item: INewInjectable): Promise<void> {
+export async function generateDomainStore(
+  item: INewInjectable,
+  onProgress: (progress: IProgressStep[]) => void,
+): Promise<void> {
   return internalGenerateInjectableClass(
     item,
     kDomainStoreDependencyContainerPath,
     kDomainStoreTemplateFile,
     true,
+    onProgress,
   );
 }
 
@@ -255,12 +263,16 @@ export async function generateDomainStore(item: INewInjectable): Promise<void> {
  *
  * @param item params to generate from
  */
-export async function generateScreenStore(item: INewInjectable): Promise<void> {
+export async function generateScreenStore(
+  item: INewInjectable,
+  onProgress: (progress: IProgressStep[]) => void,
+): Promise<void> {
   return internalGenerateInjectableClass(
     item,
     kScreenStoreDependencyContainerPath,
     kScreenStoreTemplateFile,
     true,
+    onProgress,
   );
 }
 
@@ -274,29 +286,52 @@ async function internalGenerateInjectableClass(
   dependencyContainerPath: string,
   fileTemplate: string,
   forceDependencyInit: boolean,
+  onProgress: (progress: IProgressStep[]) => void,
 ): Promise<void> {
+  const submissionProgress: IProgressStep[] = [
+    { description: `Adding ${item.serviceIdentifier} to App Types` },
+    { description: `Adding ${item.serviceIdentifier} to Dependency Container` },
+    { description: `Writing class file for ${item.importPath}` },
+    { description: `Copying and finalizing output` },
+  ];
+
+  const updateStatus = (index: number, status: ProgressStepStatus): void => {
+    submissionProgress[index].status = status;
+    onProgress([...submissionProgress]);
+  };
+
+  let currentStep = 0;
   try {
     const finalizeFunctions = new Array<() => void>();
 
     // Add a ServiceIdentifier for the new Injectable to `Types.ts`
-    logInfo(`Adding ${item.serviceIdentifier} to App Types`);
-    finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
+    updateStatus(currentStep, ProgressStepStatus.InProgress);
+    submissionProgress[currentStep].status = finalizeFunctions.push(
+      await updateAppTypes(item.serviceIdentifier),
+    );
+    updateStatus(currentStep, ProgressStepStatus.Complete);
 
+    ++currentStep;
     // Adds a call to `bind` the injectable in the DependencyContainer class
-    logInfo(`Adding ${item.serviceIdentifier} to Dependency Container`);
+    updateStatus(currentStep, ProgressStepStatus.InProgress);
     finalizeFunctions.push(
       await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit),
     );
+    updateStatus(currentStep, ProgressStepStatus.Complete);
 
+    ++currentStep;
     // Generates the new class from the template
-    logInfo(`Writing class file for ${item.importPath}`);
+    updateStatus(currentStep, ProgressStepStatus.InProgress);
     finalizeFunctions.push(await writeInjectableClass(item, fileTemplate));
+    updateStatus(currentStep, ProgressStepStatus.Complete);
 
     // Iterate over functions to finalize (write) output to `wf-react` repo
-    logInfo(`Copying and finalizing output`);
+    ++currentStep;
+    updateStatus(currentStep, ProgressStepStatus.InProgress);
     finalizeFunctions.forEach(async f => await f());
-    logInfo(`Done generating injectable ${item.name}`);
+    updateStatus(currentStep, ProgressStepStatus.Complete);
   } catch (error) {
+    updateStatus(currentStep, ProgressStepStatus.Error);
     throw new Error(`Error generating injectable ${item.name}: ${error}`);
   }
 }

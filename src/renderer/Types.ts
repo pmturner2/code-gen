@@ -16,3 +16,15 @@ export type ImportMap = Map<string, string>;
 export interface INewInjectable extends IInjectable {
   dependencies: IInjectable[];
 }
+
+export enum ProgressStepStatus {
+  Incomplete,
+  Complete,
+  InProgress,
+  Error,
+}
+
+export interface IProgressStep {
+  description: string;
+  status?: ProgressStepStatus;
+}

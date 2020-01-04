@@ -4,11 +4,12 @@ import { InjectableCategory } from '../Constants';
 import { generateInjectableClass } from '../generator/FileGenerator';
 import { getAvailableInjectables } from '../generator/InjectableUtils';
 import { cloneMap, uppercaseFirstLetter } from '../generator/Utils';
-import { IInjectable } from '../Types';
+import { IInjectable, IProgressStep } from '../Types';
 import { DependencySelector } from './common/DependencySelector';
 import { FormSection } from './common/FormSection';
 import { TextInput } from './common/TextInput';
 import { DialogCoordinatorContext } from './DialogCoordinator';
+import { ProgressDialog } from './ProgressDialog';
 
 interface IProps {
   navigate: (route: string) => void;
@@ -62,6 +63,7 @@ function getServiceIdentifier(name: string, category: InjectableCategory) {
  * Form for generating Service, DomainStore, or ScreenStore classes
  */
 export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
+  const { category } = props;
   const [availableDependencies, setAvailableDependencies] = React.useState<
     Map<string, Map<string, IInjectable>>
   >(null);
@@ -69,6 +71,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
   const [hasEditedPath, setHasEditedPath] = React.useState(false);
   const [name, setName] = React.useState('');
   const [path, setPath] = React.useState('');
+  const [submissionProgress, setSubmissionProgress] = React.useState([]);
   const dialogCoordinator = React.useContext(DialogCoordinatorContext);
 
   function getSelectedDependencies(category: InjectableCategory): string[] {
@@ -84,6 +87,10 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
     return true;
   }
 
+  const onSubmissionProgress = (progress: IProgressStep[]) => {
+    setSubmissionProgress(progress);
+  };
+
   const handleSubmit = async (event: React.SyntheticEvent) => {
     event.preventDefault();
 
@@ -92,8 +99,8 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
         return;
       }
 
-      // TODO: Should be a loading spinner
-      dialogCoordinator.showInfo(`Generating: ${name}`);
+      const serviceIdentifier = getServiceIdentifier(name, category);
+      const importPath = getFullImportPath(path, category);
 
       const selectedDependencies = dependencies.map(serviceIdentifier => {
         for (const category of props.dependencyCategories) {
@@ -106,22 +113,23 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
         return null;
       });
 
-      const { category } = props;
       await generateInjectableClass(
         {
           dependencies: selectedDependencies,
-          importPath: getFullImportPath(path, category),
+          importPath,
           interfaceName: getInterfaceName(name, category),
           name: getClassName(name, category),
-          serviceIdentifier: getServiceIdentifier(name, category),
+          serviceIdentifier,
         },
         category,
+        onSubmissionProgress,
       );
-      dialogCoordinator.showInfo(`Successfully generated ${category}: ${name}`);
     } catch (error) {
       dialogCoordinator.showError(error.message ? error.message : error);
     }
+  };
 
+  const handleDialogClose = () => {
     props.navigate('Home');
   };
 
@@ -163,66 +171,73 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
     return null;
   }
 
-  const { category } = props;
   return (
-    <form onSubmit={handleSubmit} className="main-content">
-      <FormSection title={`Generate ${category}`}>
-        <TextInput
-          label="Name"
-          name="Name"
-          placeholder={`e.g. Game for Game${category}`}
-          onChange={handleTextChange}
-          value={name}
-        />
-        <TextInput
-          label="Path"
-          name="Path"
-          placeholder="e.g. game for src/services/game"
-          onChange={handleTextChange}
-          value={path}
-        />
-      </FormSection>
-      <FormSection title="Dependencies">
-        {props.dependencyCategories.map(category => {
-          const items = Array.from(availableDependencies.get(category).values());
+    <React.Fragment>
+      <form onSubmit={handleSubmit} className="main-content">
+        <FormSection title={`Generate ${category}`}>
+          <TextInput
+            label="Name"
+            name="Name"
+            placeholder={`e.g. Game for Game${category}`}
+            onChange={handleTextChange}
+            value={name}
+          />
+          <TextInput
+            label="Path"
+            name="Path"
+            placeholder="e.g. game for src/services/game"
+            onChange={handleTextChange}
+            value={path}
+          />
+        </FormSection>
+        <FormSection title="Dependencies">
+          {props.dependencyCategories.map(category => {
+            const items = Array.from(availableDependencies.get(category).values());
 
-          return (
-            <DependencySelector
-              category={category}
-              selectedItems={getSelectedDependencies(category)}
-              items={items}
-              onChange={handleDependencyChange}
-              key={category}
-            />
-          );
-        })}
-      </FormSection>
-      {props.children}
-      <FormSection title={`Create a new ${category}`}>
-        {name && path && (
-          <Typography variant="subtitle2" className="element">{`${getFullImportPath(
-            path,
-            props.category,
-          )}/${getClassName(name, props.category)}.ts`}</Typography>
-        )}
-        {name && path && (
-          <Typography variant="subtitle2" className="element">{`${getFullImportPath(
-            path,
-            props.category,
-          )}/${getInterfaceName(name, props.category)}.ts`}</Typography>
-        )}
-        <Button
-          type="submit"
-          name="Submit"
-          value="Create"
-          fullWidth={false}
-          className="form-submit element"
-          variant="contained"
-          color="primary"
-        >
-          Create
-        </Button>
-      </FormSection>
-    </form>
+            return (
+              <DependencySelector
+                category={category}
+                selectedItems={getSelectedDependencies(category)}
+                items={items}
+                onChange={handleDependencyChange}
+                key={category}
+              />
+            );
+          })}
+        </FormSection>
+        {props.children}
+        <FormSection title={`Create a new ${category}`}>
+          {name && path && (
+            <Typography variant="subtitle2" className="element">{`${getFullImportPath(
+              path,
+              props.category,
+            )}/${getClassName(name, props.category)}.ts`}</Typography>
+          )}
+          {name && path && (
+            <Typography variant="subtitle2" className="element">{`${getFullImportPath(
+              path,
+              props.category,
+            )}/${getInterfaceName(name, props.category)}.ts`}</Typography>
+          )}
+          <Button
+            type="submit"
+            name="Submit"
+            value="Create"
+            fullWidth={false}
+            className="form-submit element"
+            variant="contained"
+            color="primary"
+          >
+            Create
+          </Button>
+        </FormSection>
+      </form>
+      <ProgressDialog
+        open={submissionProgress.length !== 0}
+        steps={submissionProgress}
+        title={`Generating ${getClassName(name, props.category)}.ts...`}
+        handleClose={handleDialogClose}
+      />
+    </React.Fragment>
   );
 };

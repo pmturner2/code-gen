@@ -108,6 +108,22 @@ form .section .children {
   padding: 10px;
 }
 
+.success {
+  color: #4bb543;
+}
+
+.error {
+  color: #b00020;
+}
+
+.incomplete {
+  color: #9e9e9e;
+}
+
+.inprogress {
+  color: #212121;
+}
+
 // form .text-input-row {
 //   display: flex;
 //   flex: 1;

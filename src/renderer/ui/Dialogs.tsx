@@ -15,23 +15,24 @@ import * as React from 'react';
 const kTransitionInDuration = 700;
 const kTransitionOutDuration = 350;
 
-interface ISimpleDialogProps {
+export interface ISimpleDialogProps {
   open?: boolean;
   onExited?: () => void;
   handleClose?: () => void;
 }
 
-interface ISimpleOneButtonDialogProps extends ISimpleDialogProps {
+export interface ISimpleOneButtonDialogProps extends ISimpleDialogProps {
   buttonText?: string;
   onClick?: () => void;
+  hideButton?: boolean;
 }
 
-interface IErrorDialogProps extends ISimpleOneButtonDialogProps {
+export interface IErrorDialogProps extends ISimpleOneButtonDialogProps {
   message: string;
   title?: string;
 }
 
-interface IInfoDialogProps extends ISimpleOneButtonDialogProps {
+export interface IInfoDialogProps extends ISimpleOneButtonDialogProps {
   message: string;
   title?: string;
 }
@@ -45,7 +46,7 @@ export const SimpleDialog: React.FunctionComponent<ISimpleDialogProps> = props =
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
-      maxWidth="xs"
+      maxWidth="sm"
       fullWidth={true}
       onExited={onExited}
       transitionDuration={{ enter: kTransitionInDuration, exit: kTransitionOutDuration }}
@@ -58,7 +59,7 @@ export const SimpleDialog: React.FunctionComponent<ISimpleDialogProps> = props =
 };
 
 export const SimpleOneButtonDialog: React.FunctionComponent<ISimpleOneButtonDialogProps> = props => {
-  const { buttonText, onClick, handleClose, children } = props;
+  const { buttonText, onClick, handleClose, hideButton, children } = props;
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -72,7 +73,13 @@ export const SimpleOneButtonDialog: React.FunctionComponent<ISimpleOneButtonDial
     <SimpleDialog {...props}>
       {children}
       <DialogActions>
-        <Button onClick={handleClick} color="primary">
+        <Button
+          onClick={handleClick}
+          color="primary"
+          style={{
+            visibility: hideButton ? 'hidden' : 'visible',
+          }}
+        >
           {buttonText || 'Okay'}
         </Button>
       </DialogActions>
