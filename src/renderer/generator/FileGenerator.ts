@@ -15,6 +15,7 @@ import {
   lowercaseFirstLetter,
   readFile,
   replaceTokens,
+  separateCommentsFromLines,
   writeAndPrettify,
 } from './Utils';
 
@@ -40,20 +41,40 @@ async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
 
   lines.forEach(line => {
     if (line.includes(`const ${category} = `)) {
-      const categorySection = [line.substr(0, line.indexOf('{') + 1)];
-      const body = line.substr(line.indexOf('{') + 1, line.indexOf('}'));
-      const entries = body
-        .split(/[,;}{}\n]/g)
-        .map(entry => entry.trim())
-        .filter(entry => entry);
-      entries.forEach(entry => {
-        if (entry.includes(newEntry)) {
+      const openCurlyBraceIndex = line.indexOf('{');
+      const closeCurlyBraceIndex = line.indexOf('}');
+      const categorySection = [line.substr(0, openCurlyBraceIndex + 1)];
+      const body = line.substr(
+        openCurlyBraceIndex + 1,
+        closeCurlyBraceIndex - openCurlyBraceIndex - 1,
+      );
+      const linesAndComments = separateCommentsFromLines(body);
+      linesAndComments.forEach(lineWithComments => {
+        if (lineWithComments.line.includes(newEntry)) {
           throw new Error('ServiceIdentifier already exists');
         }
       });
-      entries.push(newEntry);
-      entries.sort();
-      categorySection.push(entries.join(','));
+
+      linesAndComments.push({ line: `${newEntry}, ` });
+      linesAndComments.sort((a, b) => (a.line.trim() < b.line.trim() ? -1 : 1));
+
+      categorySection.push(
+        linesAndComments
+          .map(lineWithComments => {
+            const result = [];
+            if (lineWithComments.commentBefore) {
+              result.push(lineWithComments.commentBefore);
+            }
+            result.push(lineWithComments.line);
+            if (lineWithComments.commentEnd) {
+              result.push(lineWithComments.commentEnd);
+            }
+
+            return result.join('\n');
+          })
+          .join('\n'),
+      );
+
       categorySection.push(` }\n`);
       newLines.push(categorySection.join('\n'));
     } else {
@@ -332,6 +353,8 @@ async function internalGenerateInjectableClass(
     updateStatus(currentStep, ProgressStepStatus.Complete);
   } catch (error) {
     updateStatus(currentStep, ProgressStepStatus.Error);
-    throw new Error(`Error generating injectable ${item.name}: ${error}`);
+    throw new Error(
+      `Error generating injectable ${item.name}. ${error.message ? error.message : error}`,
+    );
   }
 }

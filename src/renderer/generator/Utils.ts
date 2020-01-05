@@ -104,6 +104,33 @@ export function replaceTokens(str: string, tokens: Map<string, string>) {
   return str.replace(re, matched => tokens.get(matched));
 }
 
+export interface ILineWithComments {
+  line?: string;
+  commentBefore?: string;
+  commentEnd?: string;
+}
+
+export function separateCommentsFromLines(str: string): ILineWithComments[] {
+  const result: ILineWithComments[] = [];
+  const lines = str.split(/[\n]/g);
+
+  let commentBefore = [];
+  for (const line of lines) {
+    if (line.trim().startsWith('//')) {
+      commentBefore.push(line);
+    } else {
+      const endOfLineIndex = line.indexOf('//');
+      result.push({
+        line,
+        commentBefore: commentBefore.length !== 0 ? commentBefore.join('\n') : undefined,
+        commentEnd: endOfLineIndex !== -1 ? line.substr(endOfLineIndex) : undefined,
+      });
+      commentBefore = [];
+    }
+  }
+  return result;
+}
+
 /**
  * Write data to a file at `path`. Will create if it doesn't exist.
  * Runs `prettier` and `eslint` on the output.

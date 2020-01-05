@@ -49,16 +49,17 @@ function renderIcon(status: ProgressStepStatus) {
 
 export const ProgressDialog: React.FunctionComponent<IProgressDialogProps> = props => {
   const { title, steps } = props;
-  const isFinished =
-    steps.some(step => step.status === ProgressStepStatus.Error) ||
-    steps.every(step => step.status === ProgressStepStatus.Complete);
+  const hasError = steps.some(step => step.status === ProgressStepStatus.Error);
+  const isCompleted = steps.every(step => step.status === ProgressStepStatus.Complete);
+  const isFinished = hasError || isCompleted;
+
   return (
     <SimpleOneButtonDialog
       {...props}
       hideButton={!isFinished}
       disableBackdropClick={true}
       disableEscapeKeyDown={true}
-      buttonText={'Done'}
+      buttonText={hasError ? 'Okay' : 'Done'}
     >
       {title && <DialogTitle>{title}</DialogTitle>}
       <DialogContent>
