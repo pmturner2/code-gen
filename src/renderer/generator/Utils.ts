@@ -121,7 +121,7 @@ export function separateCommentsFromLines(str: string): ILineWithComments[] {
     } else {
       const endOfLineIndex = line.indexOf('//');
       result.push({
-        line,
+        line, // includes commentEnd
         commentBefore: commentBefore.length !== 0 ? commentBefore.join('\n') : undefined,
         commentEnd: endOfLineIndex !== -1 ? line.substr(endOfLineIndex) : undefined,
       });
@@ -129,6 +129,15 @@ export function separateCommentsFromLines(str: string): ILineWithComments[] {
     }
   }
   return result;
+}
+
+export function reconstructCommentsAndLines(lineWithComments: ILineWithComments): string {
+  const result = [];
+  if (lineWithComments.commentBefore) {
+    result.push(lineWithComments.commentBefore);
+  }
+  result.push(lineWithComments.line);
+  return result.join('\n');
 }
 
 /**

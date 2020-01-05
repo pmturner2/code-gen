@@ -14,6 +14,7 @@ import {
   getTokensFromFile,
   lowercaseFirstLetter,
   readFile,
+  reconstructCommentsAndLines,
   replaceTokens,
   separateCommentsFromLines,
   writeAndPrettify,
@@ -58,22 +59,7 @@ async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
       linesAndComments.push({ line: `${newEntry}, ` });
       linesAndComments.sort((a, b) => (a.line.trim() < b.line.trim() ? -1 : 1));
 
-      categorySection.push(
-        linesAndComments
-          .map(lineWithComments => {
-            const result = [];
-            if (lineWithComments.commentBefore) {
-              result.push(lineWithComments.commentBefore);
-            }
-            result.push(lineWithComments.line);
-            if (lineWithComments.commentEnd) {
-              result.push(lineWithComments.commentEnd);
-            }
-
-            return result.join('\n');
-          })
-          .join('\n'),
-      );
+      categorySection.push(linesAndComments.map(reconstructCommentsAndLines).join('\n'));
 
       categorySection.push(` }\n`);
       newLines.push(categorySection.join('\n'));
