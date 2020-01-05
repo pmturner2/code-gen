@@ -53,9 +53,9 @@ function getServiceIdentifier(name: string, category: InjectableCategory) {
     case 'Service':
       return `ServiceTypes.${name}`;
     case 'DomainStore':
-      return `ScreenStoreTypes.${name}`;
-    case 'ScreenStore':
       return `DomainStoreTypes.${name}`;
+    case 'ScreenStore':
+      return `ScreenStoreTypes.${name}`;
   }
 }
 
