@@ -291,7 +291,7 @@ async function internalGenerateInjectableClass(
   const submissionProgress: IProgressStep[] = [
     { description: `Adding ${item.serviceIdentifier} to App Types` },
     { description: `Adding ${item.serviceIdentifier} to Dependency Container` },
-    { description: `Writing class file for ${item.importPath}` },
+    { description: `Writing class file for ${item.importPath}/${item.name}.ts` },
     { description: `Copying and finalizing output` },
   ];
 

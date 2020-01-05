@@ -4,6 +4,7 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
+  DialogProps,
   DialogTitle,
   Fade,
   Grid,
@@ -15,8 +16,7 @@ import * as React from 'react';
 const kTransitionInDuration = 700;
 const kTransitionOutDuration = 350;
 
-export interface ISimpleDialogProps {
-  open?: boolean;
+export interface ISimpleDialogProps extends DialogProps {
   onExited?: () => void;
   handleClose?: () => void;
 }
@@ -38,7 +38,7 @@ export interface IInfoDialogProps extends ISimpleOneButtonDialogProps {
 }
 
 export const SimpleDialog: React.FunctionComponent<ISimpleDialogProps> = props => {
-  const { open, onExited, handleClose, children } = props;
+  const { open, onExited, handleClose, children, ...dialogProps } = props;
   return (
     <Dialog
       open={open}
@@ -50,6 +50,7 @@ export const SimpleDialog: React.FunctionComponent<ISimpleDialogProps> = props =
       fullWidth={true}
       onExited={onExited}
       transitionDuration={{ enter: kTransitionInDuration, exit: kTransitionOutDuration }}
+      {...dialogProps}
     >
       <Fade timeout={{ enter: kTransitionInDuration, exit: kTransitionOutDuration }} in={open}>
         <div>{children}</div>
@@ -59,18 +60,18 @@ export const SimpleDialog: React.FunctionComponent<ISimpleDialogProps> = props =
 };
 
 export const SimpleOneButtonDialog: React.FunctionComponent<ISimpleOneButtonDialogProps> = props => {
-  const { buttonText, onClick, handleClose, hideButton, children } = props;
+  const { buttonText, onClick, hideButton, children, ...dialogProps } = props;
   const handleClick = () => {
     if (onClick) {
       onClick();
     }
-    if (handleClose) {
-      handleClose();
+    if (dialogProps.handleClose) {
+      dialogProps.handleClose();
     }
   };
 
   return (
-    <SimpleDialog {...props}>
+    <SimpleDialog {...dialogProps}>
       {children}
       <DialogActions>
         <Button

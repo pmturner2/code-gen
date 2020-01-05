@@ -53,7 +53,13 @@ export const ProgressDialog: React.FunctionComponent<IProgressDialogProps> = pro
     steps.some(step => step.status === ProgressStepStatus.Error) ||
     steps.every(step => step.status === ProgressStepStatus.Complete);
   return (
-    <SimpleOneButtonDialog {...props} hideButton={!isFinished}>
+    <SimpleOneButtonDialog
+      {...props}
+      hideButton={!isFinished}
+      disableBackdropClick={true}
+      disableEscapeKeyDown={true}
+      buttonText={'Done'}
+    >
       {title && <DialogTitle>{title}</DialogTitle>}
       <DialogContent>
         <Grid container direction="column">

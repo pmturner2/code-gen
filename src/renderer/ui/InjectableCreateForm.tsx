@@ -235,7 +235,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
       <ProgressDialog
         open={submissionProgress.length !== 0}
         steps={submissionProgress}
-        title={`Generating ${getClassName(name, props.category)}.ts...`}
+        title={`Generating ${getClassName(name, props.category)}`}
         handleClose={handleDialogClose}
       />
     </React.Fragment>

@@ -45,11 +45,11 @@ export const DialogCoordinator: React.FunctionComponent = props => {
   };
 
   const showErrorDialog = (message: string): void => {
-    showDialog(<ErrorDialog message={message} />);
+    showDialog(<ErrorDialog message={message} open={false} />);
   };
 
   const showInfoDialog = (message: string): void => {
-    showDialog(<InfoDialog message={message} title={undefined} />);
+    showDialog(<InfoDialog message={message} title={undefined} open={false} />);
   };
 
   const [dialogContext] = React.useState<IDialogCoordinator>({
