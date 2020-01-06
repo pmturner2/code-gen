@@ -5,9 +5,9 @@ import { generateInjectableClass } from '../generator/FileGenerator';
 import { getAvailableInjectables } from '../generator/InjectableUtils';
 import { cloneMap, uppercaseFirstLetter } from '../generator/Utils';
 import { IInjectable, IProgressStep } from '../Types';
-import { DependencySelector } from './common/DependencySelector';
 import { FormSection } from './common/FormSection';
 import { TextInput } from './common/TextInput';
+import { DependencySelector } from './DependencySelector';
 import { DialogCoordinatorContext } from './DialogCoordinator';
 import { ProgressDialog } from './ProgressDialog';
 

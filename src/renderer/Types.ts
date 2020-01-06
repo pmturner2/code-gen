@@ -17,6 +17,38 @@ export interface INewInjectable extends IInjectable {
   dependencies: IInjectable[];
 }
 
+export interface INewService extends INewInjectable {
+  zsrRequests: IZsrRequest;
+}
+
+export enum HttpRequestVerb {
+  Get = 'GET',
+  Put = 'PUT',
+  Post = 'POST',
+  Delete = 'DELETE',
+}
+
+export enum ZsrRequestService {
+  Gwf = 'AppInfoService.gwfServer()',
+  NetworkAccount = 'AppInfoService.networkAccountServer()',
+  Conversation = "'conversation'",
+  Leaderboards = "'leaderboards'",
+  Log = "'log'",
+  Optimize = "'optimize'",
+  Track = "'track'",
+}
+
+export interface IZsrRequest {
+  verb: HttpRequestVerb;
+  service: ZsrRequestService;
+  method: string; // e.g. 'game' for gwf/game
+  retryPolicy: 'None' | 'Once' | 'Exponential';
+  eventKey?: string;
+  requestObjectInterfaceName?: string;
+  responseObjectInterfaceName?: string;
+  functionName?: string;
+}
+
 export enum ProgressStepStatus {
   Incomplete,
   Complete,
