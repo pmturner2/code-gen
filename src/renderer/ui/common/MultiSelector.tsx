@@ -9,7 +9,7 @@ import {
 import React from 'react';
 
 interface IProps {
-  key: string;
+  id: string;
   title: string;
   items: string[];
   selectedItems: string[];
@@ -17,13 +17,13 @@ interface IProps {
 }
 
 export const MultiSelector: React.FunctionComponent<IProps> = props => {
-  const { key, title, items, selectedItems, onChange } = props;
+  const { id, title, items, selectedItems, onChange } = props;
   return (
     <FormControl className="element">
-      <InputLabel id={`${key}-label`}>{title}</InputLabel>
+      <InputLabel id={`${id}-label`}>{title}</InputLabel>
       <Select
-        labelId={`${key}-label`}
-        id={`${key}`}
+        labelId={`${id}-label`}
+        id={`${id}`}
         multiple
         value={selectedItems}
         onChange={onChange}

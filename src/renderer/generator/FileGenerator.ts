@@ -344,3 +344,14 @@ async function internalGenerateInjectableClass(
     );
   }
 }
+
+export function getStringForZsrService(zsrService: ZsrRequestService): string {
+  switch (zsrService) {
+    case ZsrRequestService.Gwf:
+      return 'AppInfoService.gwfServer()';
+    case ZsrRequestService.NetworkAccount:
+      return 'AppInfoService.networkAccountServer()';
+    default:
+      return `'${zsrService}'`;
+  }
+}

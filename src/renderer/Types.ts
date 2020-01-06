@@ -29,24 +29,32 @@ export enum HttpRequestVerb {
 }
 
 export enum ZsrRequestService {
-  Gwf = 'AppInfoService.gwfServer()',
-  NetworkAccount = 'AppInfoService.networkAccountServer()',
-  Conversation = "'conversation'",
-  Leaderboards = "'leaderboards'",
-  Log = "'log'",
-  Optimize = "'optimize'",
-  Track = "'track'",
+  Gwf = 'gwf',
+  NetworkAccount = 'networkaccount',
+  Conversation = 'conversation',
+  Leaderboards = 'leaderboards',
+  Log = 'log',
+  Optimize = 'optimize',
+  Track = 'track',
+}
+
+export enum RetryPolicy {
+  None = 'None',
+  Once = 'Once',
+  Exponential = 'Exponential',
 }
 
 export interface IZsrRequest {
   verb: HttpRequestVerb;
   service: ZsrRequestService;
   method: string; // e.g. 'game' for gwf/game
-  retryPolicy: 'None' | 'Once' | 'Exponential';
+  retryPolicy: RetryPolicy;
   eventKey?: string;
   requestObjectInterfaceName?: string;
   responseObjectInterfaceName?: string;
   functionName?: string;
+  requestJson?: string;
+  responseJson?: string;
 }
 
 export enum ProgressStepStatus {

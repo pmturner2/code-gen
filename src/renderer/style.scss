@@ -62,8 +62,8 @@ form .section {
   flex-direction: column;
 }
 
-form .section .element:not(:first-child) {
-  margin-top: 10px;
+.element:not(:first-child) {
+  margin-top: 20px;
 }
 
 form .section .header-text {

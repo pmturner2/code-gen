@@ -1,7 +1,7 @@
-import { FormControl, Input, InputLabel } from '@material-ui/core';
+import { FormControl, Input, InputLabel, InputProps } from '@material-ui/core';
 import React from 'react';
 
-interface IProps {
+interface IProps extends InputProps {
   label: string;
   name: string;
   value: string;
@@ -11,12 +11,12 @@ interface IProps {
 }
 
 export const TextInput: React.FunctionComponent<IProps> = props => {
-  const { className, label, name, placeholder, value, onChange } = props;
+  const { className, label, ...inputProps } = props;
 
   return (
     <FormControl className={`element ${className}`}>
       <InputLabel>{label}</InputLabel>
-      <Input type="text" name={name} placeholder={placeholder} onChange={onChange} value={value} />
+      <Input type="text" {...inputProps} />
     </FormControl>
   );
 };

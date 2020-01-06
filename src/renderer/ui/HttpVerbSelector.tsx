@@ -3,23 +3,22 @@ import { HttpRequestVerb } from '../Types';
 import { Selector } from './common/Selector';
 
 interface IProps {
-  key: string;
-  title: string;
+  id?: string;
   selectedItem: HttpRequestVerb;
   onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export const HttpVerbSelector: React.FunctionComponent<IProps> = props => {
-  const { key, title, selectedItem, onChange } = props;
+  const { id = 'verb', selectedItem, onChange } = props;
   const enumKeys = Object.keys(HttpRequestVerb);
   const items: string[] = enumKeys.map((key: keyof typeof HttpRequestVerb) => HttpRequestVerb[key]);
 
   return (
     <Selector
-      title={title}
+      title={'Verb'}
       items={items}
       selectedItem={selectedItem}
-      key={key}
+      id={id}
       onChange={onChange}
     />
   );

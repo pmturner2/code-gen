@@ -11,7 +11,11 @@ export const FormSection: React.FunctionComponent<IProps> = props => {
   return (
     <Card className={`section ${className}`}>
       <div className={'header'}>
-        {title ? <Typography variant="subtitle1">{title}</Typography> : null}
+        {title ? (
+          <Typography variant="subtitle2" color="primary">
+            {title.toUpperCase()}
+          </Typography>
+        ) : null}
       </div>
       <div className={'children'}>{children}</div>
     </Card>

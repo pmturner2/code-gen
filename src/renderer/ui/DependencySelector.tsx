@@ -17,7 +17,7 @@ export const DependencySelector: React.FunctionComponent<IProps> = props => {
       title={`${category} Dependencies`}
       items={items.map(item => item.serviceIdentifier)}
       selectedItems={selectedItems}
-      key={`${category}-dependencies`}
+      id={`${category}-dependencies`}
       onChange={onChange}
     />
   );

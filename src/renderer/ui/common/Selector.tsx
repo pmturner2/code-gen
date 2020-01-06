@@ -9,7 +9,7 @@ import {
 import React from 'react';
 
 interface IProps {
-  key: string;
+  id: string;
   title: string;
   items: string[];
   selectedItem: string;
@@ -17,13 +17,13 @@ interface IProps {
 }
 
 export const Selector: React.FunctionComponent<IProps> = props => {
-  const { key, title, items, selectedItem, onChange } = props;
+  const { id, title, items, selectedItem, onChange } = props;
   return (
     <FormControl className="element">
-      <InputLabel id={`${key}-label`}>{title}</InputLabel>
+      <InputLabel id={`${id}-label`}>{title}</InputLabel>
       <Select
-        labelId={`${key}-label`}
-        id={`${key}`}
+        labelId={`${id}-label`}
+        id={`${id}`}
         value={selectedItem}
         onChange={onChange}
         renderValue={(selected: string) => selected}
