@@ -4,7 +4,7 @@ import { InjectableCategory } from '../Constants';
 import { generateInjectableClass } from '../generator/FileGenerator';
 import { getAvailableInjectables } from '../generator/InjectableUtils';
 import { cloneMap, uppercaseFirstLetter } from '../generator/Utils';
-import { IInjectable, IProgressStep } from '../Types';
+import { IInjectable, INewInjectable, IProgressStep } from '../Types';
 import { FormSection } from './common/FormSection';
 import { TextInput } from './common/TextInput';
 import { DependencySelector } from './DependencySelector';
@@ -15,6 +15,11 @@ interface IProps {
   navigate: (route: string) => void;
   dependencyCategories: InjectableCategory[];
   category: InjectableCategory;
+  submit?: (
+    request: INewInjectable,
+    category: InjectableCategory,
+    onSubmissionProgress: (progress: IProgressStep[]) => void,
+  ) => Promise<void>;
 }
 
 function getFullImportPath(importPath: string, category: InjectableCategory): string {
@@ -113,7 +118,8 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
         return null;
       });
 
-      await generateInjectableClass(
+      const { submit = generateInjectableClass } = props;
+      await submit(
         {
           dependencies: selectedDependencies,
           importPath,

@@ -9,7 +9,14 @@ import {
   kServiceTemplateFile,
   kWfReactSrcFolder,
 } from '../Constants';
-import { IInjectable, INewInjectable, IProgressStep, ProgressStepStatus } from '../Types';
+import {
+  IInjectable,
+  INewInjectable,
+  INewService,
+  IProgressStep,
+  ProgressStepStatus,
+  ZsrRequestService,
+} from '../Types';
 import {
   getTokensFromFile,
   lowercaseFirstLetter,
@@ -143,6 +150,31 @@ async function writeInjectableClass(
   item: INewInjectable,
   fileTemplateFilename: string,
 ): Promise<() => void> {
+  const tokens = await getInjectableTokens(item);
+  const template = await readFile(fileTemplateFilename);
+  const result = replaceTokens(template, tokens);
+
+  // Write output
+  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
+}
+
+/**
+ * Generates a map of tokens from the template to their replacement.
+ * This is used to populate the file template later.
+ *
+ * @param item Item to build the map from
+ */
+function getStandardTokens(item: IInjectable): Map<string, string> {
+  return new Map([
+    ['__SERVICE_IDENTIFIER__', item.serviceIdentifier],
+    ['__NAME__', item.name],
+    ['__INTERFACE_NAME__', item.interfaceName],
+    ['__CAMEL_CASE_NAME__', lowercaseFirstLetter(item.name)],
+    ['__IMPORT_PATH__', item.importPath],
+  ]);
+}
+
+async function getInjectableTokens(item: INewInjectable): Promise<Map<string, string>> {
   const dependencyMembers = await getDependencyReplacement(
     'templates/snippets/DependencyMember._ts',
     item,
@@ -164,8 +196,6 @@ async function writeInjectableClass(
   });
   const typeImports = Array.from(typeImportSet).join(',');
   const injectImport = item.dependencies.length === 0 ? '' : 'inject, ';
-
-  const template = await readFile(fileTemplateFilename);
   const tokens = getStandardTokens(item);
   tokens.set('__DEPENDENCY_MEMBERS__', dependencyMembers);
   tokens.set('__CONSTRUCTOR_INJECTION__', ctorParams);
@@ -173,26 +203,7 @@ async function writeInjectableClass(
   tokens.set('__CONSTRUCTOR_MEMBER_ASSIGNMENTS__', memberAssignments);
   tokens.set('__TYPE_IMPORTS__', typeImports);
   tokens.set('__INJECT_IMPORT__', injectImport);
-  const result = replaceTokens(template, tokens);
-
-  // Write output
-  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
-}
-
-/**
- * Generates a map of tokens from the template to their replacement.
- * This is used to populate the file template later.
- *
- * @param item Item to build the map from
- */
-function getStandardTokens(item: IInjectable): Map<string, string> {
-  return new Map([
-    ['__SERVICE_IDENTIFIER__', item.serviceIdentifier],
-    ['__NAME__', item.name],
-    ['__INTERFACE_NAME__', item.interfaceName],
-    ['__CAMEL_CASE_NAME__', lowercaseFirstLetter(item.name)],
-    ['__IMPORT_PATH__', item.importPath],
-  ]);
+  return tokens;
 }
 
 /**
@@ -229,22 +240,85 @@ export async function generateInjectableClass(
   }
 }
 
+async function executeSteps(
+  steps: IProgressStep[],
+  onProgress: (progress: IProgressStep[]) => void,
+) {
+  const updateStatus = (index: number, status: ProgressStepStatus): void => {
+    steps[index].status = status;
+    onProgress([...steps]);
+  };
+  let currentStep = -1;
+  try {
+    for (const step of steps) {
+      ++currentStep;
+      updateStatus(currentStep, ProgressStepStatus.InProgress);
+      await step.execute();
+      updateStatus(currentStep, ProgressStepStatus.Complete);
+    }
+  } catch (error) {
+    updateStatus(currentStep, ProgressStepStatus.Error);
+    throw error;
+  }
+}
+
 /**
  * Generates a new `Service` class, and properly updates the `wf-react` codebase
  *
  * @param item params to generate from
  */
 export async function generateService(
-  item: INewInjectable,
+  item: INewService,
   onProgress: (progress: IProgressStep[]) => void,
 ): Promise<void> {
-  return internalGenerateInjectableClass(
-    item,
-    kServiceDependencyContainerPath,
-    kServiceTemplateFile,
-    false,
-    onProgress,
-  );
+  const submissionProgress: IProgressStep[] = [];
+  try {
+    const finalizeFunctions = new Array<() => void>();
+
+    submissionProgress.push({
+      description: `Adding ${item.serviceIdentifier} to App Types`,
+      execute: async () => {
+        finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
+      },
+    });
+
+    submissionProgress.push({
+      description: `Adding ${item.serviceIdentifier} to Dependency Container`,
+      execute: async () => {
+        finalizeFunctions.push(
+          await updateDependencyContainer(item, kServiceDependencyContainerPath, false),
+        );
+      },
+    });
+
+    submissionProgress.push({
+      description: `Writing class file for ${item.importPath}/${item.name}.ts`,
+      execute: async () => {
+        finalizeFunctions.push(await writeInjectableClass(item, kServiceTemplateFile));
+      },
+    });
+
+    if (item.zsrRequests) {
+      submissionProgress.push({
+        description: `Writing Api file for ${item.importPath}/${item.apiFilename}.ts`,
+        execute: async () => {
+          // finalizeFunctions.push(await writeInjectableClass(item, kServiceTemplateFile));
+        },
+      });
+    }
+
+    submissionProgress.push({
+      description: `Copying and finalizing output`,
+      execute: async () => {
+        finalizeFunctions.forEach(async f => await f());
+      },
+    });
+    await executeSteps(submissionProgress, onProgress);
+  } catch (error) {
+    throw new Error(
+      `Error generating injectable ${item.name}. ${error.message ? error.message : error}`,
+    );
+  }
 }
 
 /**
@@ -295,50 +369,41 @@ async function internalGenerateInjectableClass(
   forceDependencyInit: boolean,
   onProgress: (progress: IProgressStep[]) => void,
 ): Promise<void> {
-  const submissionProgress: IProgressStep[] = [
-    { description: `Adding ${item.serviceIdentifier} to App Types` },
-    { description: `Adding ${item.serviceIdentifier} to Dependency Container` },
-    { description: `Writing class file for ${item.importPath}/${item.name}.ts` },
-    { description: `Copying and finalizing output` },
-  ];
+  const submissionProgress: IProgressStep[] = [];
 
-  const updateStatus = (index: number, status: ProgressStepStatus): void => {
-    submissionProgress[index].status = status;
-    onProgress([...submissionProgress]);
-  };
-
-  let currentStep = 0;
   try {
     const finalizeFunctions = new Array<() => void>();
+    submissionProgress.push({
+      description: `Adding ${item.serviceIdentifier} to App Types`,
+      execute: async () => {
+        finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
+      },
+    });
 
-    // Add a ServiceIdentifier for the new Injectable to `Types.ts`
-    updateStatus(currentStep, ProgressStepStatus.InProgress);
-    submissionProgress[currentStep].status = finalizeFunctions.push(
-      await updateAppTypes(item.serviceIdentifier),
-    );
-    updateStatus(currentStep, ProgressStepStatus.Complete);
+    submissionProgress.push({
+      description: `Adding ${item.serviceIdentifier} to Dependency Container`,
+      execute: async () => {
+        finalizeFunctions.push(
+          await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit),
+        );
+      },
+    });
 
-    ++currentStep;
-    // Adds a call to `bind` the injectable in the DependencyContainer class
-    updateStatus(currentStep, ProgressStepStatus.InProgress);
-    finalizeFunctions.push(
-      await updateDependencyContainer(item, dependencyContainerPath, forceDependencyInit),
-    );
-    updateStatus(currentStep, ProgressStepStatus.Complete);
+    submissionProgress.push({
+      description: `Writing class file for ${item.importPath}/${item.name}.ts`,
+      execute: async () => {
+        finalizeFunctions.push(await writeInjectableClass(item, fileTemplate));
+      },
+    });
 
-    ++currentStep;
-    // Generates the new class from the template
-    updateStatus(currentStep, ProgressStepStatus.InProgress);
-    finalizeFunctions.push(await writeInjectableClass(item, fileTemplate));
-    updateStatus(currentStep, ProgressStepStatus.Complete);
-
-    // Iterate over functions to finalize (write) output to `wf-react` repo
-    ++currentStep;
-    updateStatus(currentStep, ProgressStepStatus.InProgress);
-    finalizeFunctions.forEach(async f => await f());
-    updateStatus(currentStep, ProgressStepStatus.Complete);
+    submissionProgress.push({
+      description: `Copying and finalizing output`,
+      execute: async () => {
+        finalizeFunctions.forEach(async f => await f());
+      },
+    });
+    await executeSteps(submissionProgress, onProgress);
   } catch (error) {
-    updateStatus(currentStep, ProgressStepStatus.Error);
     throw new Error(
       `Error generating injectable ${item.name}. ${error.message ? error.message : error}`,
     );

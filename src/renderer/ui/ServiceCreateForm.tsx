@@ -2,7 +2,17 @@ import { Button, Divider, IconButton } from '@material-ui/core';
 import AddCircle from '@material-ui/icons/AddCircle';
 import RemoveCircle from '@material-ui/icons/RemoveCircle';
 import React from 'react';
+import { InjectableCategory } from '../Constants';
+import { generateService } from '../generator/FileGenerator';
 import { cloneMap } from '../generator/Utils';
+import {
+  HttpRequestVerb,
+  INewInjectable,
+  IProgressStep,
+  IZsrRequest,
+  RetryPolicy,
+  ZsrRequestService,
+} from '../Types';
 import { FormSection } from './common/FormSection';
 import { InjectableCreateForm } from './InjectableCreateForm';
 import { ZsrApiForm } from './ZsrApiForm';
@@ -12,13 +22,17 @@ interface IProps {
 }
 
 export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
-  const [zsrApis, setZsrApis] = React.useState(new Map());
+  const [zsrApis, setZsrApis] = React.useState(new Map<string, IZsrRequest>());
   const [nextKey, setNextKey] = React.useState(0);
 
   const handleAddZsrApi = () => {
     const key = nextKey.toString();
-    console.log('Add Zsr Api ' + key);
-    zsrApis.set(key, {});
+    zsrApis.set(key, {
+      method: '',
+      retryPolicy: RetryPolicy.Exponential,
+      service: ZsrRequestService.Gwf,
+      verb: HttpRequestVerb.Get,
+    });
     setZsrApis(cloneMap(zsrApis));
     setNextKey(nextKey + 1);
   };
@@ -31,18 +45,35 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
   }
 
   function createZsrApiFormChangeHandler(key: string) {
-    return () => {
-      zsrApis.set(key, {});
+    return (requestData: IZsrRequest) => {
+      zsrApis.set(key, requestData);
+      setZsrApis(cloneMap(zsrApis));
     };
   }
 
-  console.log(Array.from(zsrApis.keys()));
-
+  const submit = async (
+    request: INewInjectable,
+    _: InjectableCategory,
+    onSubmissionProgress: (progress: IProgressStep[]) => void,
+  ) => {
+    await generateService(
+      {
+        ...request,
+        apiFilename:
+          zsrApis.size !== 0
+            ? `${request.name.substr(0, request.name.lastIndexOf('Service'))}Api`
+            : undefined,
+        zsrRequests: Array.from(zsrApis.keys()).map(key => zsrApis.get(key)),
+      },
+      onSubmissionProgress,
+    );
+  };
   return (
     <InjectableCreateForm
       navigate={props.navigate}
       dependencyCategories={['Service']}
       category="Service"
+      submit={submit}
     >
       <FormSection title="Zynga Api Calls">
         <Button
@@ -56,10 +87,9 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
         </Button>
         {Array.from(zsrApis.keys()).map(key => {
           return (
-            <div>
+            <div key={key}>
               <Divider />
               <FormSection
-                key={key}
                 startIcon={
                   <IconButton onClick={createZsrApiRemoveHandler(key)}>
                     <RemoveCircle color="error" />

@@ -5,7 +5,7 @@ export interface IInjectable {
   name: string; // e.g. GameService
   interfaceName: string; // e.g. IGameService
   serviceIdentifier: string; // e.g. ServiceTypes.Game
-  importPath: string; // e.g. 'services/game/GameService.ts'
+  importPath: string; // e.g. 'services/game/GameService.ts' for existing
 }
 
 /**
@@ -18,7 +18,8 @@ export interface INewInjectable extends IInjectable {
 }
 
 export interface INewService extends INewInjectable {
-  zsrRequests: IZsrRequest;
+  zsrRequests?: IZsrRequest[];
+  apiFilename?: string;
 }
 
 export enum HttpRequestVerb {
@@ -67,4 +68,5 @@ export enum ProgressStepStatus {
 export interface IProgressStep {
   description: string;
   status?: ProgressStepStatus;
+  execute?: () => Promise<void>;
 }
