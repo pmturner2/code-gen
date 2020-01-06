@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { uppercaseFirstLetter } from '../generator/Utils';
 import { HttpRequestVerb, IZsrRequest, RetryPolicy, ZsrRequestService } from '../Types';
 import { FormSection } from './common/FormSection';
+import { MultiLineTextInput } from './common/MultiLineTextInput';
 import { TextInput } from './common/TextInput';
 import { HttpVerbSelector } from './HttpVerbSelector';
 import { RetryPolicySelector } from './RetryPolicySelector';
@@ -10,6 +11,7 @@ import { ZsrServiceSelector } from './ZsrServiceSelector';
 
 interface IProps {
   onChange: (request: IZsrRequest) => void;
+  onClickRemove: () => void;
 }
 
 /**
@@ -147,67 +149,61 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
 
   return (
     <React.Fragment>
-      <FormSection title={'Zynga Api Call'}>
-        <HttpVerbSelector selectedItem={verb} onChange={handleHttpVerbChange} />
-        <ZsrServiceSelector selectedItem={service} onChange={handleZsrServiceChange} />
+      <HttpVerbSelector selectedItem={verb} onChange={handleHttpVerbChange} />
+      <ZsrServiceSelector selectedItem={service} onChange={handleZsrServiceChange} />
+      <TextInput
+        label="Method"
+        name="method"
+        placeholder="e.g. `games` for gwf/games"
+        onChange={handleMethodChange}
+        value={method}
+      />
+      <RetryPolicySelector selectedItem={retryPolicy} onChange={handleRetryPolicyChange} />
+      <TextInput
+        label="Event Key"
+        name="eventKey"
+        placeholder="e.g. `GET gwf/games`"
+        onChange={handleEventKeyChange}
+        value={eventKey}
+      />
+      <TextInput
+        label="Function Name"
+        name="functionName"
+        placeholder="e.g. `fetchGames`"
+        onChange={handleFunctionNameChange}
+        value={functionName}
+      />
+      <FormSection title={'Request Object'}>
         <TextInput
-          label="Method"
-          name="method"
-          placeholder="e.g. `games` for gwf/games"
-          onChange={handleMethodChange}
-          value={method}
+          label="Name"
+          name="requestObjectName"
+          placeholder="e.g. `IGameFetchRequest`"
+          onChange={handleRequestObjectNameChange}
+          value={requestObjectName}
         />
-        <RetryPolicySelector selectedItem={retryPolicy} onChange={handleRetryPolicyChange} />
+        <MultiLineTextInput
+          label="Json"
+          name="requestObjectJson"
+          placeholder="e.g. `{}`"
+          onChange={handleRequestJsonChange}
+          value={requestJson}
+        />
+      </FormSection>
+      <FormSection title={'Response Object'}>
         <TextInput
-          label="Event Key"
-          name="eventKey"
-          placeholder="e.g. `GET gwf/games`"
-          onChange={handleEventKeyChange}
-          value={eventKey}
+          label="Name"
+          name="responseObjectName"
+          placeholder="e.g. `IGameFetchResponse`"
+          onChange={handleResponseObjectNameChange}
+          value={responseObjectName}
         />
-        <TextInput
-          label="Function Name"
-          name="functionName"
-          placeholder="e.g. `fetchGames`"
-          onChange={handleFunctionNameChange}
-          value={functionName}
+        <MultiLineTextInput
+          label="Json"
+          name="responseObjectJson"
+          placeholder="e.g. `{}`"
+          onChange={handleResponseJsonChange}
+          value={responseJson}
         />
-        <FormSection title={'Request Object'}>
-          <TextInput
-            label="Name"
-            name="requestObjectName"
-            placeholder="e.g. `IGameFetchRequest`"
-            onChange={handleRequestObjectNameChange}
-            value={requestObjectName}
-          />
-          <TextInput
-            label="Json"
-            name="requestObjectJson"
-            placeholder="e.g. `{}`"
-            onChange={handleRequestJsonChange}
-            value={requestJson}
-            multiline
-            rows={6}
-          />
-        </FormSection>
-        <FormSection title={'Response Object'}>
-          <TextInput
-            label="Name"
-            name="responseObjectName"
-            placeholder="e.g. `IGameFetchResponse`"
-            onChange={handleResponseObjectNameChange}
-            value={responseObjectName}
-          />
-          <TextInput
-            label="Json"
-            name="responseObjectJson"
-            placeholder="e.g. `{}`"
-            onChange={handleResponseJsonChange}
-            value={responseJson}
-            multiline
-            rows={6}
-          />
-        </FormSection>
       </FormSection>
     </React.Fragment>
   );
