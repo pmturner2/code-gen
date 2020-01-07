@@ -51,6 +51,13 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
     };
   }
 
+  const forceAddDependencies = () => {
+    if (zsrApis.size > 0) {
+      return ['ServiceTypes.Logging', 'ServiceTypes.ZSR'];
+    }
+    return [];
+  };
+
   const submit = async (
     request: INewInjectable,
     _: InjectableCategory,
@@ -74,6 +81,7 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
       dependencyCategories={['Service']}
       category="Service"
       submit={submit}
+      forceAddDependencies={forceAddDependencies}
     >
       <FormSection title="Zynga Api Calls">
         <Button

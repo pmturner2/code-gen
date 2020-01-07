@@ -1,0 +1,20 @@
+
+async __FUNCTION_NAME__(freshnessInterval: number, request?: __REQUEST_INTERFACE_NAME__): Promise<__RESPONSE_INTERFACE_NAME__> {
+  try {    
+    const data = {
+      ...request
+    };
+    const response = await this.zsrService.post({
+      data,
+      freshnessInterval,
+      method: '__METHOD__',      
+      retryPolicy: RetryPolicy.__RETRY_POLICY__,
+      service: __SERVICE__,
+    });
+    this.loggingService.info(this.name, '__FUNCTION_NAME__', response.data);
+    return response.data;
+  } catch (error) {
+    this.loggingService.error(`${this.name} __FUNCTION_NAME__`, error);
+    throw error;
+  }
+}

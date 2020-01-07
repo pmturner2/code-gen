@@ -19,6 +19,11 @@ export class __NAME__ extends InjectableBase implements __INTERFACE_NAME__ {
     this.awaitDependenciesAndInit(arguments);
   }
 
+  __GET_API_CALLS__
+  __PUT_API_CALLS__
+  __POST_API_CALLS__
+  __DELETE_API_CALLS__
+
   @action
   protected initDefaultValues(): void {
     // TODO: Sync initialization goes here.

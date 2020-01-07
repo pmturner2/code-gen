@@ -160,9 +160,24 @@ export function getStandardTokens(item: IInjectable): Map<string, string> {
     ['__SERVICE_IDENTIFIER__', item.serviceIdentifier],
     ['__NAME__', item.name],
     ['__INTERFACE_NAME__', item.interfaceName],
-    ['__CAMEL_CASE_NAME__', lowercaseFirstLetter(item.name)],
+    ['__CAMEL_CASE_NAME__', camelCase(item.name)],
     ['__IMPORT_PATH__', item.importPath],
   ]);
+}
+
+function isLowerCase(letter: string): boolean {
+  return letter > 'a' && letter < 'z';
+}
+
+function camelCase(input: string): string {
+  if (input.length <= 1 || isLowerCase(input.charAt(1))) {
+    return lowercaseFirstLetter(input);
+  }
+  for (let i = 0; i < input.length; ++i) {
+    if (isLowerCase(input.charAt(i))) {
+      return `${input.substr(0, i - 1).toLowerCase()}${input.substr(i - 1)}`;
+    }
+  }
 }
 
 /**

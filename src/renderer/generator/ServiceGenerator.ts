@@ -4,7 +4,13 @@ import {
   kServiceTemplateFile,
   kWfReactSrcFolder,
 } from '../Constants';
-import { INewService, IProgressStep, IZsrRequest, ZsrRequestService } from '../Types';
+import {
+  HttpRequestVerb,
+  INewService,
+  IProgressStep,
+  IZsrRequest,
+  ZsrRequestService,
+} from '../Types';
 import {
   executeSteps,
   getInjectableTokens,
@@ -32,9 +38,14 @@ async function writeServiceClass(
   return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
 }
 
-async function getZsrApiReplacement(snippetFile: string, item: INewService): Promise<string> {
+async function getZsrApiReplacement(
+  snippetFile: string,
+  item: INewService,
+  filter: (zsrRequest: IZsrRequest) => boolean = () => true,
+): Promise<string> {
   const template = await readFile(snippetFile);
   return item.zsrRequests
+    .filter(filter)
     .map(zsrRequest => {
       const tokens = getZsrApiTokens(zsrRequest, item.apiFilename);
       return replaceTokens(template, tokens);
@@ -70,16 +81,62 @@ function getZsrApiTokens(item: IZsrRequest, apiFilename: string): Map<string, st
     ['__REQUEST_INTERFACE_NAME__', item.requestObjectInterfaceName],
     ['__RESPONSE_INTERFACE_NAME__', item.responseObjectInterfaceName],
     ['__API_FILENAME__', apiFilename],
+    ['__FUNCTION_NAME__', item.functionName],
+    ['__METHOD__', item.method],
+    ['__RETRY_POLICY__', item.retryPolicy],
+    ['__SERVICE__', getStringForZsrService(item.service)],
   ]);
 }
 
 async function getServiceTokens(item: INewService): Promise<Map<string, string>> {
   const tokens = await getInjectableTokens(item);
-  const apiImports = await getZsrApiReplacement(
+  let apiImports = await getZsrApiReplacement(
     'templates/snippets/ImportRequestResponseFromApi._ts',
     item,
   );
+
+  if (item.zsrRequests.length > 0) {
+    apiImports += `
+    import { RetryPolicy } from 'services/networking/zsr/ZSRApi';`;
+    if (
+      item.zsrRequests.some(
+        (request: IZsrRequest) =>
+          request.service === ZsrRequestService.Gwf ||
+          request.service === ZsrRequestService.NetworkAccount,
+      )
+    ) {
+      apiImports += `
+      import { AppInfoService } from 'services/appinfo/AppInfoService'`;
+    }
+  }
+
+  const getApis = await getZsrApiReplacement(
+    'templates/snippets/ZsrGetRequest._ts',
+    item,
+    (zsrRequest: IZsrRequest) => zsrRequest.verb === HttpRequestVerb.Get,
+  );
+  const postApis = await getZsrApiReplacement(
+    'templates/snippets/ZsrPostRequest._ts',
+    item,
+    (zsrRequest: IZsrRequest) => zsrRequest.verb === HttpRequestVerb.Post,
+  );
+  const putApis = await getZsrApiReplacement(
+    'templates/snippets/ZsrPutRequest._ts',
+    item,
+    (zsrRequest: IZsrRequest) => zsrRequest.verb === HttpRequestVerb.Put,
+  );
+  const deleteApis = await getZsrApiReplacement(
+    'templates/snippets/ZsrDeleteRequest._ts',
+    item,
+    (zsrRequest: IZsrRequest) => zsrRequest.verb === HttpRequestVerb.Delete,
+  );
+
   tokens.set('__API_IMPORTS__', apiImports);
+  tokens.set('__GET_API_CALLS__', getApis);
+  tokens.set('__PUT_API_CALLS__', putApis);
+  tokens.set('__POST_API_CALLS__', postApis);
+  tokens.set('__DELETE_API_CALLS__', deleteApis);
+
   return tokens;
 }
 

@@ -20,6 +20,7 @@ interface IProps {
     category: InjectableCategory,
     onSubmissionProgress: (progress: IProgressStep[]) => void,
   ) => Promise<void>;
+  forceAddDependencies?: () => string[];
 }
 
 function getFullImportPath(importPath: string, category: InjectableCategory): string {
@@ -107,6 +108,15 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
       const serviceIdentifier = getServiceIdentifier(name, category);
       const importPath = getFullImportPath(path, category);
 
+      const { submit = generateInjectableClass, forceAddDependencies } = props;
+      if (forceAddDependencies) {
+        const forcedDependencies = forceAddDependencies();
+        for (const dep of forcedDependencies) {
+          if (dependencies.indexOf(dep) == -1) {
+            dependencies.push(dep);
+          }
+        }
+      }
       const selectedDependencies = dependencies.map(serviceIdentifier => {
         for (const category of props.dependencyCategories) {
           const depsForCategory = availableDependencies.get(category);
@@ -118,7 +128,6 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
         return null;
       });
 
-      const { submit = generateInjectableClass } = props;
       await submit(
         {
           dependencies: selectedDependencies,
