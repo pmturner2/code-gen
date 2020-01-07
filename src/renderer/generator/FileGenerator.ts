@@ -5,6 +5,7 @@ import {
   kDomainStoreTemplateFile,
   kScreenStoreDependencyContainerPath,
   kScreenStoreTemplateFile,
+  kServiceApiTemplateFile,
   kServiceDependencyContainerPath,
   kServiceTemplateFile,
   kWfReactSrcFolder,
@@ -14,9 +15,11 @@ import {
   INewInjectable,
   INewService,
   IProgressStep,
+  IZsrRequest,
   ProgressStepStatus,
   ZsrRequestService,
 } from '../Types';
+import { generateInterfaceFromJson } from './TypescriptUtils';
 import {
   getTokensFromFile,
   lowercaseFirstLetter,
@@ -141,7 +144,7 @@ async function updateDependencyContainer(
 }
 
 /**
- * Generates a new injectable class (Service, DomainStore, ScreenStore)
+ * Generates a new injectable class (DomainStore, ScreenStore)
  *
  * @param item params to generate from
  * @param fileTemplateFilename template to build from
@@ -156,6 +159,57 @@ async function writeInjectableClass(
 
   // Write output
   return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
+}
+
+/**
+ * Generates a new injectable Service class
+ *
+ * @param item params to generate from
+ * @param fileTemplateFilename template to build from
+ */
+async function writeServiceClass(
+  item: INewService,
+  fileTemplateFilename: string,
+): Promise<() => void> {
+  const tokens = await getServiceTokens(item);
+  const template = await readFile(fileTemplateFilename);
+  const result = replaceTokens(template, tokens);
+
+  // Write output
+  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
+}
+
+async function getZsrApiReplacement(snippetFile: string, item: INewService): Promise<string> {
+  const template = await readFile(snippetFile);
+  return item.zsrRequests
+    .map(zsrRequest => {
+      const tokens = getZsrApiTokens(zsrRequest, item.apiFilename);
+      return replaceTokens(template, tokens);
+    })
+    .join('\n');
+}
+
+async function writeServiceApiFile(item: INewService): Promise<() => void> {
+  let result = '';
+  for (const zsrRequest of item.zsrRequests) {
+    result += await writeApi(zsrRequest);
+  }
+  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.apiFilename}.ts`);
+}
+
+async function writeApi(item: IZsrRequest): Promise<string> {
+  const tokens = new Map([
+    [
+      '__REQUEST_INTERFACE__',
+      generateInterfaceFromJson(item.requestObjectInterfaceName, item.requestJson),
+    ],
+    [
+      '__RESPONSE_INTERFACE__',
+      generateInterfaceFromJson(item.responseObjectInterfaceName, item.responseJson),
+    ],
+  ]);
+  const template = await readFile(kServiceApiTemplateFile);
+  return replaceTokens(template, tokens);
 }
 
 /**
@@ -174,6 +228,30 @@ function getStandardTokens(item: IInjectable): Map<string, string> {
   ]);
 }
 
+function getZsrApiTokens(item: IZsrRequest, apiFilename: string): Map<string, string> {
+  return new Map([
+    ['__REQUEST_INTERFACE_NAME__', item.requestObjectInterfaceName],
+    ['__RESPONSE_INTERFACE_NAME__', item.responseObjectInterfaceName],
+    ['__API_FILENAME__', apiFilename],
+  ]);
+}
+
+async function getServiceTokens(item: INewService): Promise<Map<string, string>> {
+  const tokens = await getInjectableTokens(item);
+  const apiImports = await getZsrApiReplacement(
+    'templates/snippets/ImportRequestResponseFromApi._ts',
+    item,
+  );
+  tokens.set('__API_IMPORTS__', apiImports);
+  return tokens;
+}
+
+/**
+ * Generates a map of tokens from the template to their replacement for Stores and Services
+ * This is used to populate the file template later.
+ *
+ * @param item Item to build the map from
+ */
 async function getInjectableTokens(item: INewInjectable): Promise<Map<string, string>> {
   const dependencyMembers = await getDependencyReplacement(
     'templates/snippets/DependencyMember._ts',
@@ -240,6 +318,12 @@ export async function generateInjectableClass(
   }
 }
 
+/**
+ * Executes a series of steps and calls back when status changes.
+ *
+ * @param steps array of steps to execute
+ * @param onProgress callback when a step status changes
+ */
 async function executeSteps(
   steps: IProgressStep[],
   onProgress: (progress: IProgressStep[]) => void,
@@ -294,15 +378,15 @@ export async function generateService(
     submissionProgress.push({
       description: `Writing class file for ${item.importPath}/${item.name}.ts`,
       execute: async () => {
-        finalizeFunctions.push(await writeInjectableClass(item, kServiceTemplateFile));
+        finalizeFunctions.push(await writeServiceClass(item, kServiceTemplateFile));
       },
     });
 
-    if (item.zsrRequests) {
+    if (item.zsrRequests && item.zsrRequests.length > 0) {
       submissionProgress.push({
         description: `Writing Api file for ${item.importPath}/${item.apiFilename}.ts`,
         execute: async () => {
-          // finalizeFunctions.push(await writeInjectableClass(item, kServiceTemplateFile));
+          finalizeFunctions.push(await writeServiceApiFile(item));
         },
       });
     }

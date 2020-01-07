@@ -91,6 +91,8 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
       requestObjectInterfaceName: requestObjectName,
       responseObjectInterfaceName: responseObjectName,
       functionName,
+      requestJson,
+      responseJson,
     });
   }, [
     method,
@@ -101,6 +103,8 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
     functionName,
     requestObjectName,
     responseObjectName,
+    requestJson,
+    responseJson,
   ]);
 
   const handleHttpVerbChange = (event: React.ChangeEvent<{ value: unknown }>) => {

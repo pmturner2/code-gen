@@ -20,6 +20,7 @@ export const kWfReactSrcFolder = `${kWfReactFolder}/src`;
 export const kServiceTemplateFile = 'templates/file/Service._ts';
 export const kDomainStoreTemplateFile = 'templates/file/DomainStore._ts';
 export const kScreenStoreTemplateFile = 'templates/file/ScreenStore._ts';
+export const kServiceApiTemplateFile = 'templates/file/ServiceApi._ts';
 
 /**
  * Paths to DependencyContainer.ts files in `wf-react` relative to `code-gen` root`

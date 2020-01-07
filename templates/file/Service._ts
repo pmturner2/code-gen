@@ -2,6 +2,7 @@ import { __TYPE_IMPORTS__ } from 'app/Types';
 import { InjectableBase } from 'common/InjectableBase';
 import { __INJECT_IMPORT__ injectable } from 'inversify';
 import { action } from 'mobx';
+__API_IMPORTS__
 __DEPENDENCY_IMPORTS__
 
 export interface __INTERFACE_NAME__ {
