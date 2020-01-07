@@ -1,3 +1,4 @@
+import { Typography } from '@material-ui/core';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { uppercaseFirstLetter } from '../generator/Utils';
@@ -22,8 +23,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
   const [service, setService] = React.useState<ZsrRequestService>(ZsrRequestService.Gwf);
   const [method, setMethod] = React.useState('');
   const [retryPolicy, setRetryPolicy] = React.useState<RetryPolicy>(RetryPolicy.Exponential);
-  const [eventKey, setEventKey] = React.useState('');
-  const [hasEditedEventKey, setHasEditedEventKey] = React.useState(false);
   const [functionName, setFunctionName] = React.useState('');
   const [hasEditedFunctionName, setHasEditedFunctionName] = React.useState(false);
   const [requestObjectName, setRequestObjectName] = React.useState('');
@@ -32,10 +31,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
   const [hasEditedResponseObjectName, setHasEditedResponseObjectName] = React.useState(false);
   const [requestJson, setRequestJson] = React.useState('{}');
   const [responseJson, setResponseJson] = React.useState('{}');
-
-  function buildDefaultEventKey() {
-    return `${verb} ${service}/${method}`;
-  }
 
   function getPrefix(verb: HttpRequestVerb): string {
     return verb === HttpRequestVerb.Get ? 'fetch' : verb.toLowerCase();
@@ -58,12 +53,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
   }
 
   useEffect(() => {
-    if (!hasEditedEventKey) {
-      const newKey = buildDefaultEventKey();
-      if (newKey !== eventKey) {
-        setEventKey(newKey);
-      }
-    }
     if (!hasEditedFunctionName) {
       const newFunctionName = buildDefaultFunctionName();
       if (newFunctionName !== functionName) {
@@ -99,7 +88,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
     service,
     verb,
     retryPolicy,
-    eventKey,
     functionName,
     requestObjectName,
     responseObjectName,
@@ -121,11 +109,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
 
   const handleRetryPolicyChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setRetryPolicy(event.target.value as RetryPolicy);
-  };
-
-  const handleEventKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEventKey(event.target.value);
-    setHasEditedEventKey(true);
   };
 
   const handleFunctionNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,13 +147,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
       />
       <RetryPolicySelector selectedItem={retryPolicy} onChange={handleRetryPolicyChange} />
       <TextInput
-        label="Event Key"
-        name="eventKey"
-        placeholder="e.g. `GET gwf/games`"
-        onChange={handleEventKeyChange}
-        value={eventKey}
-      />
-      <TextInput
         label="Function Name"
         name="functionName"
         placeholder="e.g. `fetchGames`"
@@ -208,6 +184,10 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
           onChange={handleResponseJsonChange}
           value={responseJson}
         />
+        <Typography
+          variant="subtitle2"
+          className="element"
+        >{`${verb} ${service}/${method}`}</Typography>
       </FormSection>
     </React.Fragment>
   );
