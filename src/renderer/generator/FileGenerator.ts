@@ -5,21 +5,9 @@ import {
   kDomainStoreTemplateFile,
   kScreenStoreDependencyContainerPath,
   kScreenStoreTemplateFile,
-  kServiceApiTemplateFile,
-  kServiceDependencyContainerPath,
-  kServiceTemplateFile,
   kWfReactSrcFolder,
 } from '../Constants';
-import {
-  IInjectable,
-  INewInjectable,
-  INewService,
-  IProgressStep,
-  IZsrRequest,
-  ProgressStepStatus,
-  ZsrRequestService,
-} from '../Types';
-import { generateInterfaceFromJson } from './TypescriptUtils';
+import { IInjectable, INewInjectable, IProgressStep, ProgressStepStatus } from '../Types';
 import {
   getTokensFromFile,
   lowercaseFirstLetter,
@@ -38,7 +26,7 @@ function getServiceCategory(serviceIdentifier: string): string {
   return serviceIdentifier.split('.')[0];
 }
 
-async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
+export async function updateAppTypes(serviceIdentifier: string): Promise<() => void> {
   const categoryMapping = new Map<string, string>([
     ['ServiceTypes', 'Service'],
     ['DomainStoreTypes', 'Domain'],
@@ -101,7 +89,7 @@ async function readAndReplaceTokens(item: IInjectable, snippetFile: string): Pro
  * @param filePath path to the DependencyContainer file
  * @param forceInit if true, will add a `DependencyContainer.get` to force init of the Injectable
  */
-async function updateDependencyContainer(
+export async function updateDependencyContainer(
   item: IInjectable,
   filePath: string,
   forceInit: boolean,
@@ -162,63 +150,12 @@ async function writeInjectableClass(
 }
 
 /**
- * Generates a new injectable Service class
- *
- * @param item params to generate from
- * @param fileTemplateFilename template to build from
- */
-async function writeServiceClass(
-  item: INewService,
-  fileTemplateFilename: string,
-): Promise<() => void> {
-  const tokens = await getServiceTokens(item);
-  const template = await readFile(fileTemplateFilename);
-  const result = replaceTokens(template, tokens);
-
-  // Write output
-  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.name}.ts`);
-}
-
-async function getZsrApiReplacement(snippetFile: string, item: INewService): Promise<string> {
-  const template = await readFile(snippetFile);
-  return item.zsrRequests
-    .map(zsrRequest => {
-      const tokens = getZsrApiTokens(zsrRequest, item.apiFilename);
-      return replaceTokens(template, tokens);
-    })
-    .join('\n');
-}
-
-async function writeServiceApiFile(item: INewService): Promise<() => void> {
-  let result = '';
-  for (const zsrRequest of item.zsrRequests) {
-    result += await writeApi(zsrRequest);
-  }
-  return writeAndPrettify(result, `${kWfReactSrcFolder}/${item.importPath}/${item.apiFilename}.ts`);
-}
-
-async function writeApi(item: IZsrRequest): Promise<string> {
-  const tokens = new Map([
-    [
-      '__REQUEST_INTERFACE__',
-      generateInterfaceFromJson(item.requestObjectInterfaceName, item.requestJson),
-    ],
-    [
-      '__RESPONSE_INTERFACE__',
-      generateInterfaceFromJson(item.responseObjectInterfaceName, item.responseJson),
-    ],
-  ]);
-  const template = await readFile(kServiceApiTemplateFile);
-  return replaceTokens(template, tokens);
-}
-
-/**
  * Generates a map of tokens from the template to their replacement.
  * This is used to populate the file template later.
  *
  * @param item Item to build the map from
  */
-function getStandardTokens(item: IInjectable): Map<string, string> {
+export function getStandardTokens(item: IInjectable): Map<string, string> {
   return new Map([
     ['__SERVICE_IDENTIFIER__', item.serviceIdentifier],
     ['__NAME__', item.name],
@@ -228,31 +165,13 @@ function getStandardTokens(item: IInjectable): Map<string, string> {
   ]);
 }
 
-function getZsrApiTokens(item: IZsrRequest, apiFilename: string): Map<string, string> {
-  return new Map([
-    ['__REQUEST_INTERFACE_NAME__', item.requestObjectInterfaceName],
-    ['__RESPONSE_INTERFACE_NAME__', item.responseObjectInterfaceName],
-    ['__API_FILENAME__', apiFilename],
-  ]);
-}
-
-async function getServiceTokens(item: INewService): Promise<Map<string, string>> {
-  const tokens = await getInjectableTokens(item);
-  const apiImports = await getZsrApiReplacement(
-    'templates/snippets/ImportRequestResponseFromApi._ts',
-    item,
-  );
-  tokens.set('__API_IMPORTS__', apiImports);
-  return tokens;
-}
-
 /**
  * Generates a map of tokens from the template to their replacement for Stores and Services
  * This is used to populate the file template later.
  *
  * @param item Item to build the map from
  */
-async function getInjectableTokens(item: INewInjectable): Promise<Map<string, string>> {
+export async function getInjectableTokens(item: INewInjectable): Promise<Map<string, string>> {
   const dependencyMembers = await getDependencyReplacement(
     'templates/snippets/DependencyMember._ts',
     item,
@@ -309,12 +228,12 @@ export async function generateInjectableClass(
   onProgress: (progress: IProgressStep[]) => void,
 ): Promise<void> {
   switch (category) {
-    case 'Service':
-      return generateService(item, onProgress);
     case 'DomainStore':
       return generateDomainStore(item, onProgress);
     case 'ScreenStore':
       return generateScreenStore(item, onProgress);
+    default:
+      throw new Error(`Unexpected category ${category}`);
   }
 }
 
@@ -324,7 +243,7 @@ export async function generateInjectableClass(
  * @param steps array of steps to execute
  * @param onProgress callback when a step status changes
  */
-async function executeSteps(
+export async function executeSteps(
   steps: IProgressStep[],
   onProgress: (progress: IProgressStep[]) => void,
 ) {
@@ -343,65 +262,6 @@ async function executeSteps(
   } catch (error) {
     updateStatus(currentStep, ProgressStepStatus.Error);
     throw error;
-  }
-}
-
-/**
- * Generates a new `Service` class, and properly updates the `wf-react` codebase
- *
- * @param item params to generate from
- */
-export async function generateService(
-  item: INewService,
-  onProgress: (progress: IProgressStep[]) => void,
-): Promise<void> {
-  const submissionProgress: IProgressStep[] = [];
-  try {
-    const finalizeFunctions = new Array<() => void>();
-
-    submissionProgress.push({
-      description: `Adding ${item.serviceIdentifier} to App Types`,
-      execute: async () => {
-        finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
-      },
-    });
-
-    submissionProgress.push({
-      description: `Adding ${item.serviceIdentifier} to Dependency Container`,
-      execute: async () => {
-        finalizeFunctions.push(
-          await updateDependencyContainer(item, kServiceDependencyContainerPath, false),
-        );
-      },
-    });
-
-    submissionProgress.push({
-      description: `Writing class file for ${item.importPath}/${item.name}.ts`,
-      execute: async () => {
-        finalizeFunctions.push(await writeServiceClass(item, kServiceTemplateFile));
-      },
-    });
-
-    if (item.zsrRequests && item.zsrRequests.length > 0) {
-      submissionProgress.push({
-        description: `Writing Api file for ${item.importPath}/${item.apiFilename}.ts`,
-        execute: async () => {
-          finalizeFunctions.push(await writeServiceApiFile(item));
-        },
-      });
-    }
-
-    submissionProgress.push({
-      description: `Copying and finalizing output`,
-      execute: async () => {
-        finalizeFunctions.forEach(async f => await f());
-      },
-    });
-    await executeSteps(submissionProgress, onProgress);
-  } catch (error) {
-    throw new Error(
-      `Error generating injectable ${item.name}. ${error.message ? error.message : error}`,
-    );
   }
 }
 
@@ -491,16 +351,5 @@ async function internalGenerateInjectableClass(
     throw new Error(
       `Error generating injectable ${item.name}. ${error.message ? error.message : error}`,
     );
-  }
-}
-
-export function getStringForZsrService(zsrService: ZsrRequestService): string {
-  switch (zsrService) {
-    case ZsrRequestService.Gwf:
-      return 'AppInfoService.gwfServer()';
-    case ZsrRequestService.NetworkAccount:
-      return 'AppInfoService.networkAccountServer()';
-    default:
-      return `'${zsrService}'`;
   }
 }

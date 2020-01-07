@@ -3,7 +3,7 @@ import AddCircle from '@material-ui/icons/AddCircle';
 import RemoveCircle from '@material-ui/icons/RemoveCircle';
 import React from 'react';
 import { InjectableCategory } from '../Constants';
-import { generateService } from '../generator/FileGenerator';
+import { generateService } from '../generator/ServiceGenerator';
 import { cloneMap } from '../generator/Utils';
 import {
   HttpRequestVerb,
