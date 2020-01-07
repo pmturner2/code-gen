@@ -93,6 +93,24 @@ export function uppercaseFirstLetter(str: string) {
   return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 }
 
+const toDeleteRegex = /([^a-zA-Z0-9])/g;
+const wsRegex = /\s/g;
+const underscorePrefixRegex = /_[a-z]/g;
+const underscoreRegex = /_/g;
+const firstCharRegex = /^[a-zA-Z]/;
+const lastLetterS = /[sS]$/;
+
+export function generateInterfaceName(input: string): string {
+  return `I${input
+    .toLowerCase()
+    .replace(toDeleteRegex, '_')
+    .replace(wsRegex, '_')
+    .replace(underscorePrefixRegex, match => match[1].toUpperCase())
+    .replace(underscoreRegex, '')
+    .replace(lastLetterS, '')
+    .replace(firstCharRegex, match => match.toUpperCase())}`;
+}
+
 /**
  * Replaces all of the `keys` from the map with `values` within the input string.
  *

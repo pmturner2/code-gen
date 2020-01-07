@@ -1,4 +1,6 @@
-function addNodeToInterface(node: any, key?: string, interfaceString?: string) {
+import { generateInterfaceName } from './Utils';
+
+function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, string>) {
   let result = '';
   const nodeType = typeof node;
   const isArray = Array.isArray(node);
@@ -6,9 +8,16 @@ function addNodeToInterface(node: any, key?: string, interfaceString?: string) {
   if (key) {
     if (isArray) {
       const typeOfArray = typeof node[0];
-      result += `readonly ${key}: ${
-        typeOfArray === 'string' || typeOfArray === 'number' ? typeOfArray : 'any'
-      }[]; `;
+      if (typeOfArray === 'string' || typeOfArray === 'number') {
+        result += `readonly ${key}: ${typeOfArray}[]; `;
+      } else {
+        const subTypeName = generateInterfaceName(key);
+        interfaceMap.set(
+          subTypeName,
+          generateInternalInterface(subTypeName, node[0], interfaceMap),
+        );
+        result += `readonly ${key}: ${subTypeName}[]; `;
+      }
     } else if (isObject) {
       result += `readonly ${key}: { `;
     } else {
@@ -19,7 +28,7 @@ function addNodeToInterface(node: any, key?: string, interfaceString?: string) {
   if (isObject) {
     for (let childKey in node) {
       if (node.hasOwnProperty(childKey)) {
-        result += addNodeToInterface(node[childKey], childKey, interfaceString);
+        result += addNodeToInterface(node[childKey], childKey, interfaceMap);
       }
     }
     if (key) {
@@ -31,12 +40,33 @@ function addNodeToInterface(node: any, key?: string, interfaceString?: string) {
   return result;
 }
 
-export function generateInterfaceFromJson(interfaceName: string, jsonString: string): string {
-  const designData = JSON.parse(jsonString);
+export function generateInternalInterface(
+  interfaceName: string,
+  jsonObject: object,
+  interfaceMap: Map<string, string> = new Map(),
+): string {
+  let result = `
+    
+     interface ${interfaceName} {      
+     `;
+  result += addNodeToInterface(jsonObject, null, interfaceMap);
+  result += `}`;
+  return result;
+}
+
+export function generateInterfaceFromJson(
+  interfaceName: string,
+  jsonString: string,
+  interfaceMap: Map<string, string> = new Map(),
+): string {
+  const jsonObject = JSON.parse(jsonString);
   let result = ` 
      export interface ${interfaceName} {      
      `;
-  result += addNodeToInterface(designData, null);
+  result += addNodeToInterface(jsonObject, null, interfaceMap);
   result += `}`;
+  interfaceMap.forEach(interfaceDefinition => {
+    result += interfaceDefinition;
+  });
   return result;
 }
