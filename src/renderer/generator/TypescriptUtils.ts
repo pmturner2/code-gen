@@ -40,7 +40,7 @@ function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, st
   return result;
 }
 
-export function generateInternalInterface(
+function generateInternalInterface(
   interfaceName: string,
   jsonObject: object,
   interfaceMap: Map<string, string> = new Map(),
