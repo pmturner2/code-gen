@@ -10,6 +10,7 @@ import {
   ZsrRequestService,
 } from '../Types';
 import { FormAddMultipleSection } from './common/FormAddMultipleSection';
+import { DialogCoordinatorContext } from './DialogCoordinator';
 import { InjectableCreateForm } from './InjectableCreateForm';
 import { ZsrApiForm } from './ZsrApiForm';
 
@@ -19,6 +20,7 @@ interface IProps {
 
 export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
   const [zsrRequests, setZsrRequests] = React.useState<IZsrRequest[]>([]);
+  const dialogCoordinator = React.useContext(DialogCoordinatorContext);
 
   const handleZsrRequestsChange = (requests: IZsrRequest[]) => {
     setZsrRequests([...requests]);
@@ -36,6 +38,22 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
     _: InjectableCategory,
     onSubmissionProgress: (progress: IProgressStep[]) => void,
   ) => {
+    for (const request of zsrRequests) {
+      try {
+        if (request.requestJson) {
+          JSON.parse(request.requestJson);
+        }
+        if (request.responseJson) {
+          JSON.parse(request.responseJson);
+        }
+      } catch {
+        dialogCoordinator.showError(
+          `Invalid json request or response for  ${request.verb} ${request.service}/${request.method}`,
+        );
+        return;
+      }
+    }
+
     await generateService(
       {
         ...request,
@@ -58,7 +76,7 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
     >
       <FormAddMultipleSection
         title="Zynga Api Calls"
-        elementName="ApiCall"
+        elementName="Api Call"
         onChange={handleZsrRequestsChange}
         elementCreateForm={ZsrApiForm}
         defaultElement={{

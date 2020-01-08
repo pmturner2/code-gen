@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { uppercaseFirstLetter } from '../generator/Utils';
 import { HttpRequestVerb, IZsrRequest, RetryPolicy, ZsrRequestService } from '../Types';
 import { FormSection } from './common/FormSection';
-import { MultiLineTextInput } from './common/MultiLineTextInput';
+import { JsonTextInput } from './common/JsonTextInput';
 import { TextInput } from './common/TextInput';
 import { HttpVerbSelector } from './HttpVerbSelector';
 import { RetryPolicySelector } from './RetryPolicySelector';
@@ -162,7 +162,7 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
           onChange={handleRequestObjectNameChange}
           value={requestObjectName}
         />
-        <MultiLineTextInput
+        <JsonTextInput
           label="Json"
           name="requestObjectJson"
           placeholder="e.g. `{}`"
@@ -178,7 +178,7 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
           onChange={handleResponseObjectNameChange}
           value={responseObjectName}
         />
-        <MultiLineTextInput
+        <JsonTextInput
           label="Json"
           name="responseObjectJson"
           placeholder="e.g. `{}`"
