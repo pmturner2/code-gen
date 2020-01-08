@@ -12,7 +12,6 @@ import { ZsrServiceSelector } from './ZsrServiceSelector';
 
 interface IProps {
   onChange: (request: IZsrRequest) => void;
-  onClickRemove: () => void;
 }
 
 /**
@@ -144,6 +143,7 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
         placeholder="e.g. `games` for gwf/games"
         onChange={handleMethodChange}
         value={method}
+        required={true}
       />
       <RetryPolicySelector selectedItem={retryPolicy} onChange={handleRetryPolicyChange} />
       <TextInput
@@ -152,6 +152,7 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
         placeholder="e.g. `fetchGames`"
         onChange={handleFunctionNameChange}
         value={functionName}
+        required={true}
       />
       <FormSection title={'Request Object'}>
         <TextInput

@@ -105,10 +105,7 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
                 }
                 title="Api Call"
               >
-                <ZsrApiForm
-                  onChange={createZsrApiFormChangeHandler(key)}
-                  onClickRemove={createZsrApiRemoveHandler(key)}
-                />
+                <ZsrApiForm onChange={createZsrApiFormChangeHandler(key)} />
               </FormSection>
             </div>
           );

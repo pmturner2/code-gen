@@ -196,6 +196,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
             placeholder={`e.g. Game for Game${category}`}
             onChange={handleTextChange}
             value={name}
+            required={true}
           />
           <TextInput
             label="Path"
@@ -203,6 +204,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
             placeholder="e.g. game for src/services/game"
             onChange={handleTextChange}
             value={path}
+            required={true}
           />
         </FormSection>
         <FormSection title="Dependencies">
@@ -221,7 +223,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
           })}
         </FormSection>
         {props.children}
-        <FormSection title={`Create a new ${category}`}>
+        <FormSection>
           {name && path && (
             <Typography variant="subtitle2" className="element">{`${getFullImportPath(
               path,

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { AppHeader } from './AppHeader';
 import { DialogCoordinator } from './DialogCoordinator';
 import { DomainStoreCreateForm } from './DomainStoreCreateForm';
+import { FeatureCreateForm } from './FeatureCreateForm';
 import { HomeContent } from './HomeContent';
 import { MainPanel } from './MainPanel';
 import { ScreenStoreCreateForm } from './ScreenStoreCreateForm';
@@ -50,6 +51,9 @@ export class App extends React.Component<{}, IState> {
           this.createSidePanelOption('Generate Screen Store'),
         ],
       },
+      {
+        options: [this.createSidePanelOption('Generate Feature')],
+      },
     ];
   }
 
@@ -83,6 +87,11 @@ export class App extends React.Component<{}, IState> {
       case 'Generate Screen Store':
         this.setState({
           mainContent: <ScreenStoreCreateForm navigate={this.navigateTo} />,
+        });
+        break;
+      case 'Generate Feature':
+        this.setState({
+          mainContent: <FeatureCreateForm navigate={this.navigateTo} />,
         });
         break;
     }

@@ -70,3 +70,9 @@ export interface IProgressStep {
   status?: ProgressStepStatus;
   execute?: () => Promise<void>;
 }
+
+export interface IOptimization {
+  name: string;
+  variables: string; // should be valid json when submitted.
+  fetchOnWarmLaunch?: boolean;
+}
