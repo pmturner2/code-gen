@@ -29,5 +29,7 @@ export const kServiceDependencyContainerPath = `${kWfReactSrcFolder}/app/Depende
 export const kDomainStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.DomainStores.ts`;
 export const kScreenStoreDependencyContainerPath = `${kWfReactSrcFolder}/app/DependencyContainer.ScreenStores.ts`;
 export const kAppTypesPath = `${kWfReactSrcFolder}/app/Types.ts`;
+export const kOptimizationDefaultsPath = `${kWfReactSrcFolder}/domains/optimization/optimizationDefaults.json`;
+export const kOptimizationsPath = `${kWfReactSrcFolder}/domains/optimization/Optimizations.ts`;
 
 export type InjectableCategory = 'Service' | 'DomainStore' | 'ScreenStore';

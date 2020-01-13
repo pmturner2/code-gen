@@ -1,7 +1,8 @@
 import { Button } from '@material-ui/core';
 import * as React from 'react';
 import { InjectableCategory } from '../Constants';
-import { uppercaseFirstLetter } from '../generator/Utils';
+import { generateFeature } from '../generator/FeatureGenerator';
+import { generateCapitalizedCamelCaseName, uppercaseFirstLetter } from '../generator/Utils';
 import { IInjectable, INewInjectable, IOptimization, IProgressStep } from '../Types';
 import { FormAddMultipleSection } from './common/FormAddMultipleSection';
 import { FormSection } from './common/FormSection';
@@ -73,9 +74,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
     Map<string, Map<string, IInjectable>>
   >(null);
   const [dependencies, setDependencies] = React.useState<string[]>([]);
-  const [hasEditedPath, setHasEditedPath] = React.useState(false);
   const [name, setName] = React.useState('');
-  const [path, setPath] = React.useState('');
   const [submissionProgress, setSubmissionProgress] = React.useState([]);
   const dialogCoordinator = React.useContext(DialogCoordinatorContext);
 
@@ -136,17 +135,11 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
       //   return null;
       // });
 
-      // await submit(
-      //   {
-      //     dependencies: selectedDependencies,
-      //     importPath,
-      //     interfaceName: getInterfaceName(name, category),
-      //     name: getClassName(name, category),
-      //     serviceIdentifier,
-      //   },
-      //   category,
-      //   onSubmissionProgress,
-      // );
+      await generateFeature({
+        name: generateCapitalizedCamelCaseName(name),
+        optimizations,
+        onProgress: onSubmissionProgress,
+      });
     } catch (error) {
       dialogCoordinator.showError(error.message ? error.message : error);
     }
@@ -163,13 +156,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name === 'Name') {
-      if (!hasEditedPath) {
-        setPath(value.toLowerCase());
-      }
       setName(uppercaseFirstLetter(value));
-    } else if (name === 'Path') {
-      setPath(value.toLowerCase());
-      setHasEditedPath(true);
     }
   };
 

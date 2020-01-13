@@ -100,8 +100,8 @@ const underscoreRegex = /_/g;
 const firstCharRegex = /^[a-zA-Z]/;
 const lastLetterS = /[sS]$/;
 
-export function generateInterfaceName(input: string): string {
-  return `I${input
+export function generateCapitalizedCamelCaseName(input: string): string {
+  return `${input
     .toLowerCase()
     .replace(toDeleteRegex, '_')
     .replace(wsRegex, '_')
@@ -109,6 +109,10 @@ export function generateInterfaceName(input: string): string {
     .replace(underscoreRegex, '')
     .replace(lastLetterS, '')
     .replace(firstCharRegex, match => match.toUpperCase())}`;
+}
+
+export function generateInterfaceName(input: string): string {
+  return `I${generateCapitalizedCamelCaseName(input)}`;
 }
 
 /**

@@ -1,4 +1,5 @@
-import { generateInterfaceName } from './Utils';
+import * as ts from 'typescript';
+import { generateInterfaceName, writeAndPrettify } from './Utils';
 
 function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, string>) {
   let result = '';
@@ -69,4 +70,75 @@ export function generateInterfaceFromJson(
     result += interfaceDefinition;
   });
   return result;
+}
+
+/**
+ * Adds a new member to an existing enum using the typescript compiler API
+ *
+ * @param params Object
+ */
+export async function addEnumMember(params: {
+  filename: string;
+  enumName: string;
+  newKey: string;
+  newValue: string;
+}): Promise<() => void> {
+  const program = ts.createProgram([params.filename], {
+    allowJs: false,
+    newLine: ts.NewLineKind.CarriageReturnLineFeed,
+  });
+  const sourceFile = program.getSourceFile(params.filename);
+
+  const transformer = <T extends ts.Node>(context: ts.TransformationContext) => (rootNode: T) => {
+    function visit(node: ts.Node): ts.Node {
+      if (ts.isEnumDeclaration(node) && node.name.text === params.enumName) {
+        const enumDeclaration = node as ts.EnumDeclaration;
+        const newEntry = ts.createEnumMember(
+          params.newKey,
+          ts.createStringLiteral(params.newValue),
+        );
+        const enumMemberList = [newEntry];
+        enumDeclaration.members.forEach(member => enumMemberList.push(member));
+
+        // Helper to get the name of enum members
+        function getName(a: ts.PropertyName) {
+          if (ts.isIdentifier(a)) {
+            const identifier = a as ts.Identifier;
+            return identifier.escapedText;
+          } else if (ts.isStringLiteral(a)) {
+            const stringLiteral = a as ts.StringLiteral;
+            return stringLiteral.text;
+          }
+          return undefined;
+        }
+
+        // Alphabetize the enum members
+        enumMemberList.sort((a, b) => {
+          return getName(a.name) < getName(b.name) ? -1 : 1;
+        });
+
+        const newEnumDeclaration = ts.updateEnumDeclaration(
+          enumDeclaration,
+          enumDeclaration.decorators,
+          enumDeclaration.modifiers,
+          enumDeclaration.name,
+          enumMemberList,
+        );
+        return newEnumDeclaration;
+      }
+      return ts.visitEachChild(node, visit, context);
+    }
+    return ts.visitNode(rootNode, visit);
+  };
+
+  const result = ts.transform(sourceFile, [transformer]);
+  const transformedNodes = result.transformed[0];
+
+  // TODO:
+  // Figure out a way to preserve empty line whitespace in the input file. e.g. space between functions.
+  const printer: ts.Printer = ts.createPrinter({
+    removeComments: false,
+  });
+  const output = printer.printNode(ts.EmitHint.SourceFile, transformedNodes, sourceFile);
+  return writeAndPrettify(output, params.filename);
 }
