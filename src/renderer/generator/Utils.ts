@@ -160,6 +160,18 @@ export function reconstructCommentsAndLines(lineWithComments: ILineWithComments)
   return result.join('\n');
 }
 
+export async function updateJson(
+  filename: string,
+  newKey: string,
+  newValue: any,
+): Promise<() => void> {
+  const fileContents = await readFile(filename);
+  const jsonObject = JSON.parse(fileContents);
+  jsonObject[newKey] = newValue;
+  const result = JSON.stringify(jsonObject, null, 2);
+  return writeAndPrettify(result, filename);
+}
+
 /**
  * Write data to a file at `path`. Will create if it doesn't exist.
  * Runs `prettier` and `eslint` on the output.
@@ -171,12 +183,13 @@ export function reconstructCommentsAndLines(lineWithComments: ILineWithComments)
  */
 export async function writeAndPrettify(data: string, path: string): Promise<() => void> {
   try {
+    const extension = path.substr(path.lastIndexOf('.') + 1);
     const pathToFile = path.substr(0, path.lastIndexOf('/'));
     const filename = path.substr(path.lastIndexOf('/'));
 
     const tmpPath = `${kTmpFolder}/${pathToFile.replace(/\.\./gi, () => '.')}`;
-    const uglyTmpFile = `${tmpPath}${filename}_ugly.ts`;
-    const prettyTmpFile = `${tmpPath}${filename}.ts`;
+    const uglyTmpFile = `${tmpPath}${filename}_ugly.${extension}`;
+    const prettyTmpFile = `${tmpPath}${filename}.${extension}`;
 
     // Make sure folder exists in the temp space
     await fs.promises.mkdir(tmpPath, { recursive: true });

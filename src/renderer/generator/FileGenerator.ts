@@ -178,6 +178,7 @@ function camelCase(input: string): string {
       return `${input.substr(0, i - 1).toLowerCase()}${input.substr(i - 1)}`;
     }
   }
+  return input.toLowerCase();
 }
 
 /**

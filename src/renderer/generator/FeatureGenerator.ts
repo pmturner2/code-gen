@@ -1,7 +1,8 @@
-import { kOptimizationsPath } from '../Constants';
+import { kOptimizationDefaultsPath, kOptimizationsPath } from '../Constants';
 import { IOptimization, IProgressStep } from '../Types';
 import { executeSteps } from './FileGenerator';
 import { addEnumMember } from './TypescriptUtils';
+import { updateJson } from './Utils';
 
 export async function updateOptimization(optimization: IOptimization): Promise<() => void> {
   const enumName = optimization.fetchOnWarmLaunch
@@ -12,6 +13,13 @@ export async function updateOptimization(optimization: IOptimization): Promise<(
     enumName,
     newKey: optimization.key,
     newValue: optimization.name,
+  });
+}
+
+export async function updateOptimizationDefaults(optimization: IOptimization): Promise<() => void> {
+  return updateJson(kOptimizationDefaultsPath, optimization.name, {
+    experiment: optimization.name,
+    variables: JSON.parse(optimization.variables),
   });
 }
 
@@ -58,6 +66,15 @@ export async function generateFeature(feature: {
         execute: async () => {
           for (const optimization of feature.optimizations) {
             finalizeFunctions.push(await updateOptimization(optimization));
+          }
+        },
+      });
+
+      submissionProgress.push({
+        description: `Updating Optimization Defaults`,
+        execute: async () => {
+          for (const optimization of feature.optimizations) {
+            finalizeFunctions.push(await updateOptimizationDefaults(optimization));
           }
         },
       });
