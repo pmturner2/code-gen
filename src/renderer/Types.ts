@@ -72,7 +72,8 @@ export interface IProgressStep {
 }
 
 export interface IOptimization {
-  name: string;
+  name: string; // e.g. `wwf3_practice_partners`
+  key?: string; // e.g. `PracticePartners`
   variables: string; // should be valid json when submitted.
   fetchOnWarmLaunch?: boolean;
 }

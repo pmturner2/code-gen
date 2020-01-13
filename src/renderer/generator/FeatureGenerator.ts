@@ -2,7 +2,6 @@ import { kOptimizationsPath } from '../Constants';
 import { IOptimization, IProgressStep } from '../Types';
 import { executeSteps } from './FileGenerator';
 import { addEnumMember } from './TypescriptUtils';
-import { generateCapitalizedCamelCaseName } from './Utils';
 
 export async function updateOptimization(optimization: IOptimization): Promise<() => void> {
   const enumName = optimization.fetchOnWarmLaunch
@@ -11,7 +10,7 @@ export async function updateOptimization(optimization: IOptimization): Promise<(
   return addEnumMember({
     filename: kOptimizationsPath,
     enumName,
-    newKey: generateCapitalizedCamelCaseName(optimization.name),
+    newKey: optimization.key,
     newValue: optimization.name,
   });
 }

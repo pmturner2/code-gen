@@ -102,17 +102,15 @@ const lastLetterS = /[sS]$/;
 
 export function generateCapitalizedCamelCaseName(input: string): string {
   return `${input
-    .toLowerCase()
     .replace(toDeleteRegex, '_')
     .replace(wsRegex, '_')
     .replace(underscorePrefixRegex, match => match[1].toUpperCase())
     .replace(underscoreRegex, '')
-    .replace(lastLetterS, '')
     .replace(firstCharRegex, match => match.toUpperCase())}`;
 }
 
 export function generateInterfaceName(input: string): string {
-  return `I${generateCapitalizedCamelCaseName(input)}`;
+  return `I${generateCapitalizedCamelCaseName(input).replace(lastLetterS, '')}`;
 }
 
 /**
