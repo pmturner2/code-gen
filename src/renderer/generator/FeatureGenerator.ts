@@ -13,6 +13,7 @@ export async function updateOptimization(optimization: IOptimization): Promise<(
     enumName,
     newKey: optimization.key,
     newValue: optimization.name,
+    sortEnum: true,
   });
 }
 
