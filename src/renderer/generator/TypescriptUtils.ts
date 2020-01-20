@@ -84,11 +84,14 @@ async function transformTypescript(
   shouldTransform: (node: ts.Node) => boolean,
   transform: (node: ts.Node) => ts.Node,
 ): Promise<() => void> {
-  const program = ts.createProgram([filename], { allowJs: false });
+  const program = ts.createProgram([filename], { allowJs: false, removeComments: false });
   const sourceFile = program.getSourceFile(filename);
+
+  // console.log(sourceFile.text);
 
   const transformer = <T extends ts.Node>(context: ts.TransformationContext) => (rootNode: T) => {
     function visit(node: ts.Node): ts.Node {
+      // console.log(node);
       if (shouldTransform(node)) {
         return transform(node);
       } else {
@@ -99,14 +102,15 @@ async function transformTypescript(
   };
 
   const result = ts.transform(sourceFile, [transformer]);
-  const transformedNodes = result.transformed[0];
+  const transformedNode = result.transformed[0];
 
   // TODO:
   // Figure out a way to preserve empty line whitespace in the input file. e.g. space between functions.
   const printer: ts.Printer = ts.createPrinter({
     removeComments: false,
   });
-  const output = printer.printNode(ts.EmitHint.SourceFile, transformedNodes, sourceFile);
+
+  const output = printer.printNode(ts.EmitHint.SourceFile, transformedNode, sourceFile);
   return writeAndPrettify(output, filename);
 }
 
@@ -162,3 +166,69 @@ export async function addEnumMember(params: {
     },
   );
 }
+
+/**
+ * Adds a new member to an existing object using the typescript compiler API
+ *
+ * @param params Object
+ */
+export async function addObjectMember(params: {
+  filename: string;
+  objectName: string;
+  newKey: string;
+  newValue: number | boolean | string;
+}): Promise<() => void> {
+  return transformTypescript(
+    params.filename,
+    (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node)) {
+        const variableDeclaration = node as ts.VariableDeclaration;
+        return getName(variableDeclaration.name as ts.Identifier) === params.objectName;
+      }
+      return false;
+    },
+    (node: ts.Node): ts.Node => {
+      const variableDeclaration = node as ts.VariableDeclaration;
+      if (!ts.isObjectLiteralExpression(variableDeclaration.initializer)) {
+        throw new Error('Unexpected object is not a literal ' + params.objectName);
+      }
+      const initializer = variableDeclaration.initializer as ts.ObjectLiteralExpression;
+
+      const newEntry = ts.createPropertyAssignment(
+        params.newKey,
+        ts.createLiteral(params.newValue),
+      );
+      const newObjectMembers = [newEntry];
+
+      initializer.properties.forEach((child: ts.Node) => {
+        newObjectMembers.push(child as ts.PropertyAssignment);
+      });
+
+      // Alphabetize the members
+      newObjectMembers.sort((a, b) => {
+        return getName(a.name) < getName(b.name) ? -1 : 1;
+      });
+      const newInitializer = ts.createObjectLiteral(newObjectMembers, true);
+      const newObject = ts.updateVariableDeclaration(
+        variableDeclaration,
+        variableDeclaration.name,
+        variableDeclaration.type,
+        newInitializer,
+      );
+      return newObject;
+    },
+  );
+}
+
+// TEST CODE
+// async function f() {
+//   const r = await addObjectMember({
+//     filename: kConfigDefaultsPath,
+//     objectName: 'ConfigDefaults',
+//     newValue: 'Best',
+//     newKey: 'best',
+//   });
+//   r();
+// }
+
+// f();

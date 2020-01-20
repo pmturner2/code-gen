@@ -4,7 +4,7 @@ import { executeSteps } from './FileGenerator';
 import { addEnumMember } from './TypescriptUtils';
 import { updateJson } from './Utils';
 
-export async function updateOptimization(optimization: IOptimization): Promise<() => void> {
+async function updateOptimization(optimization: IOptimization): Promise<() => void> {
   const enumName = optimization.fetchOnWarmLaunch
     ? 'WarmLaunchOptimizations'
     : 'ColdLaunchOptimizations';
@@ -17,7 +17,7 @@ export async function updateOptimization(optimization: IOptimization): Promise<(
   });
 }
 
-export async function updateOptimizationDefaults(optimization: IOptimization): Promise<() => void> {
+async function updateOptimizationDefaults(optimization: IOptimization): Promise<() => void> {
   return updateJson(kOptimizationDefaultsPath, optimization.name, {
     experiment: optimization.name,
     variables: JSON.parse(optimization.variables),
@@ -80,9 +80,6 @@ export async function generateFeature(feature: {
         },
       });
     }
-
-    // TODO:
-    // Optimization default.
 
     submissionProgress.push({
       description: `Copying and finalizing output`,

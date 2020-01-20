@@ -77,3 +77,8 @@ export interface IOptimization {
   variables: string; // should be valid json when submitted.
   fetchOnWarmLaunch?: boolean;
 }
+
+export interface IServerConfig {
+  name: string;
+  defaultValue: string | number;
+}
