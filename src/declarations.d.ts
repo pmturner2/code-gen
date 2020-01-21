@@ -1,20 +1,22 @@
 // Put all your custom type information for 3rd party modules here
-declare module "*.svg" {
+declare module '*.svg' {
   const value: any;
   export = value;
 }
 
-declare module "*.png" {
+declare module '*.png' {
   const value: any;
   export = value;
 }
 
-declare module "*.ico" {
+declare module '*.ico' {
   const value: any;
   export = value;
 }
 
-declare module "*.icns" {
+declare module '*.icns' {
   const value: any;
   export = value;
 }
+
+declare module diff {}

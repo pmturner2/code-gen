@@ -1,3 +1,4 @@
+import * as diff from 'diff';
 import * as ts from 'typescript';
 import { generateInterfaceName, writeAndPrettify } from './Utils';
 
@@ -73,6 +74,33 @@ export function generateInterfaceFromJson(
 }
 
 /**
+ * Restores the blank lines stripped by the typescript compiler.
+ *
+ * @param oldText original .ts source
+ * @param newText updated .ts source
+ */
+function restoreWhitespace(oldText: string, newText: string): string {
+  const patch = diff.parsePatch(diff.createPatch('file', oldText, newText, '', ''));
+  const hunks = patch[0].hunks;
+  for (let i = 0; i < hunks.length; ++i) {
+    let lineOffset = 0;
+    const hunk = hunks[i];
+    hunk.lines = hunk.lines.map((line: string) => {
+      if (line === '-') {
+        lineOffset++;
+        return ' ';
+      }
+      return line;
+    });
+    hunk.newLines += lineOffset;
+    for (let j = i + 1; j < hunks.length; ++j) {
+      hunks[j].newStart += lineOffset;
+    }
+  }
+  return diff.applyPatch(oldText, patch);
+}
+
+/**
  * Helper to process a typescript file and transform its contents.
  *
  * @param filename name of typescript file to transform
@@ -87,11 +115,10 @@ async function transformTypescript(
   const program = ts.createProgram([filename], { allowJs: false, removeComments: false });
   const sourceFile = program.getSourceFile(filename);
 
-  // console.log(sourceFile.text);
+  const originalText = sourceFile.text;
 
   const transformer = <T extends ts.Node>(context: ts.TransformationContext) => (rootNode: T) => {
     function visit(node: ts.Node): ts.Node {
-      // console.log(node);
       if (shouldTransform(node)) {
         return transform(node);
       } else {
@@ -111,7 +138,8 @@ async function transformTypescript(
   });
 
   const output = printer.printNode(ts.EmitHint.SourceFile, transformedNode, sourceFile);
-  return writeAndPrettify(output, filename);
+  const outputWithWhitespace = restoreWhitespace(originalText, output);
+  return writeAndPrettify(outputWithWhitespace, filename);
 }
 
 // Helper to get the name of enum members
@@ -147,7 +175,14 @@ export async function addEnumMember(params: {
       const enumDeclaration = node as ts.EnumDeclaration;
       const newEntry = ts.createEnumMember(params.newKey, ts.createStringLiteral(params.newValue));
       const enumMemberList = [newEntry];
-      enumDeclaration.members.forEach(member => enumMemberList.push(member));
+      enumDeclaration.members.forEach(member => {
+        if (getName(member.name) === params.newKey) {
+          throw new Error(
+            `Error adding enum ${params.newKey} to ${params.enumName}. Already exists`,
+          );
+        }
+        enumMemberList.push(member);
+      });
       if (params.sortEnum) {
         // Alphabetize the enum members
         enumMemberList.sort((a, b) => {

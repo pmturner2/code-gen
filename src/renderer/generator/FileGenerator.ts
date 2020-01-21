@@ -8,13 +8,12 @@ import {
   kWfReactSrcFolder,
 } from '../Constants';
 import { IInjectable, INewInjectable, IProgressStep, ProgressStepStatus } from '../Types';
+import { addEnumMember } from './TypescriptUtils';
 import {
   getTokensFromFile,
   lowercaseFirstLetter,
   readFile,
-  reconstructCommentsAndLines,
   replaceTokens,
-  separateCommentsFromLines,
   writeAndPrettify,
 } from './Utils';
 
@@ -32,41 +31,14 @@ export async function updateAppTypes(serviceIdentifier: string): Promise<() => v
     ['DomainStoreTypes', 'Domain'],
     ['ScreenStoreTypes', 'Screen'],
   ]);
-  const [category, serviceName] = serviceIdentifier.split('.');
-  const lines = await getTokensFromFile(kAppTypesPath);
-  const newLines: string[] = [];
-
-  const newEntry = `${serviceName}: '${categoryMapping.get(category)}.${serviceName}'`;
-
-  lines.forEach(line => {
-    if (line.includes(`const ${category} = `)) {
-      const openCurlyBraceIndex = line.indexOf('{');
-      const closeCurlyBraceIndex = line.indexOf('}');
-      const categorySection = [line.substr(0, openCurlyBraceIndex + 1)];
-      const body = line.substr(
-        openCurlyBraceIndex + 1,
-        closeCurlyBraceIndex - openCurlyBraceIndex - 1,
-      );
-      const linesAndComments = separateCommentsFromLines(body);
-      linesAndComments.forEach(lineWithComments => {
-        if (lineWithComments.line.includes(newEntry)) {
-          throw new Error('ServiceIdentifier already exists');
-        }
-      });
-
-      linesAndComments.push({ line: `${newEntry}, ` });
-      linesAndComments.sort((a, b) => (a.line.trim() < b.line.trim() ? -1 : 1));
-
-      categorySection.push(linesAndComments.map(reconstructCommentsAndLines).join('\n'));
-
-      categorySection.push(` }\n`);
-      newLines.push(categorySection.join('\n'));
-    } else {
-      newLines.push(line);
-    }
+  const [enumName, serviceName] = serviceIdentifier.split('.');
+  return addEnumMember({
+    filename: kAppTypesPath,
+    enumName,
+    newKey: serviceName,
+    newValue: `${categoryMapping.get(enumName)}.${serviceName}`,
+    sortEnum: true,
   });
-  const output = newLines.join(';');
-  return writeAndPrettify(output, kAppTypesPath);
 }
 
 async function generateImport(item: IInjectable, includeConcrete?: boolean): Promise<string> {
