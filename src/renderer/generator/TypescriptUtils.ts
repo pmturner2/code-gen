@@ -1,9 +1,11 @@
 import * as ts from 'typescript';
+import { kConfigModelPath } from '../Constants';
 import {
   generateInterfaceName,
   prettierFormat,
   restoreWhitespace,
   writeAndPrettify,
+  writeTempData,
 } from './Utils';
 
 function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, string>) {
@@ -106,9 +108,6 @@ async function transformTypescript(
 
   const result = ts.transform(sourceFile, [transformer]);
   const transformedNode = result.transformed[0];
-
-  // TODO:
-  // Figure out a way to preserve empty line whitespace in the input file. e.g. space between functions.
   const printer: ts.Printer = ts.createPrinter({
     removeComments: false,
   });
@@ -129,6 +128,44 @@ function getName(a: ts.PropertyName) {
     return stringLiteral.text;
   }
   return undefined;
+}
+
+/**
+ * Leverage typescript program to determine the type of the value.
+ * Inefficient because it writes out the string to disk and reads / parses it in typescript.
+ *
+ * @param data element to get the type of
+ */
+function getType(data: any): ts.TypeNode {
+  // Write out some temp data to a file so we can read it and parse it as a sourceFile.
+  const tempData = `const typeTest = ${JSON.stringify(data)}`;
+  const tempFilename = 'typeTest.ts';
+  const pathToTempFile = writeTempData(tempData, tempFilename);
+
+  // Read in the temp file to get the .ts node tree.
+  const program = ts.createProgram([pathToTempFile], { allowJs: true, removeComments: false });
+  const typeChecker = program.getTypeChecker();
+  const sourceFile = program.getSourceFile(pathToTempFile);
+  let typeNode: ts.TypeNode;
+
+  sourceFile.forEachChild((node: ts.Node) => {
+    if (ts.isVariableStatement(node)) {
+      const variableStatement = node as ts.VariableStatement;
+      const declaration = variableStatement.declarationList.declarations[0];
+      if (ts.isArrayLiteralExpression(declaration.initializer)) {
+        const arrayLiteralExpression = declaration.initializer as ts.ArrayLiteralExpression;
+        const t = typeChecker.getTypeAtLocation(arrayLiteralExpression.elements[0]);
+        const baseType = typeChecker.getBaseTypeOfLiteralType(t);
+        typeNode = ts.createArrayTypeNode(typeChecker.typeToTypeNode(baseType));
+      } else {
+        // Primitive or Object:
+        const t = typeChecker.getTypeAtLocation(declaration.initializer);
+        const baseType = typeChecker.getBaseTypeOfLiteralType(t);
+        typeNode = typeChecker.typeToTypeNode(baseType);
+      }
+    }
+  });
+  return typeNode;
 }
 
 /**
@@ -232,15 +269,76 @@ export async function addObjectMember(params: {
   );
 }
 
-// TEST CODE
-// async function f() {
-//   const r = await addObjectMember({
-//     filename: kConfigDefaultsPath,
-//     objectName: 'ConfigDefaults',
-//     newValue: 'Best',
-//     newKey: 'best',
-//   });
-//   r();
-// }
+/**
+ * Adds a new member to an existing class using the typescript compiler API
+ */
+export async function addClassMember(params: {
+  filename: string;
+  className: string;
+  newKey: string;
+  newValue: any; // number | boolean | string;
+  decorators?: string[];
+}): Promise<() => void> {
+  return transformTypescript(
+    params.filename,
+    (node: ts.Node) => {
+      if (ts.isClassDeclaration(node)) {
+        const classDeclaration = node as ts.ClassDeclaration;
+        return getName(classDeclaration.name as ts.Identifier) === params.className;
+      }
+      return false;
+    },
+    (node: ts.Node): ts.Node => {
+      const classDeclaration = node as ts.ClassDeclaration;
 
-// f();
+      classDeclaration.members.forEach(member => {
+        if (getName(member.name) === params.newKey) {
+          throw new Error(
+            `Error adding class property ${params.newKey} to ${params.className}. Already exists.`,
+          );
+        }
+      });
+      const typeNode = getType(params.newValue);
+      const decorators = params.decorators.map(decoString =>
+        ts.createDecorator(ts.createIdentifier(decoString)),
+      );
+      const newEntry = ts.createProperty(
+        decorators,
+        [],
+        params.newKey,
+        undefined,
+        typeNode,
+        undefined,
+      );
+
+      const newClassMembers = [newEntry, ...classDeclaration.members];
+      const newObject = ts.updateClassDeclaration(
+        classDeclaration,
+        classDeclaration.decorators,
+        classDeclaration.modifiers,
+        classDeclaration.name,
+        classDeclaration.typeParameters,
+        classDeclaration.heritageClauses,
+        newClassMembers,
+      );
+
+      return newObject;
+    },
+  );
+}
+
+// TEST CODE
+async function f() {
+  const r = await addClassMember({
+    filename: kConfigModelPath,
+    className: 'ConfigModel',
+    newValue: {
+      this: 3,
+    },
+    newKey: `best${Math.floor(Math.random() * 10000)}`,
+    decorators: ['observable', 'serializable'],
+  });
+  r();
+}
+
+f();

@@ -1,5 +1,6 @@
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
+import * as child_process from 'child_process';
 import * as diff from 'diff';
 import fs from 'fs';
 import * as prettier from 'prettier';
@@ -175,6 +176,32 @@ export async function updateJson(
 }
 
 /**
+ * Write data to a temporary file named `filename`. Will create if it doesn't exist.
+ * Synchronous function because it is used as a helper in synchronous typescript api code.
+ * Returns path the output file.
+ *
+ * @param data data to be written
+ * @param filename filename within local TEMP folder
+ *
+ */
+export function writeTempData(data: string, filename: string): string {
+  try {
+    const tmpFile = `${kTmpFolder}/${filename}`;
+
+    // Make sure folder exists in the temp space
+    fs.mkdir(kTmpFolder, { recursive: true }, () => {});
+
+    // Write the raw, unlinted / prettified file contents to a temporary space.
+    fs.writeFileSync(tmpFile, data, {
+      flag: 'w+',
+    });
+    return tmpFile;
+  } catch (error) {
+    throw new Error(`Error writeTempData ${filename}: ${error}`);
+  }
+}
+
+/**
  * Write data to a file at `path`. Will create if it doesn't exist.
  * Runs `prettier` and `eslint` on the output.
  *
@@ -190,28 +217,29 @@ export async function writeAndPrettify(data: string, path: string): Promise<() =
     const filename = path.substr(path.lastIndexOf('/'));
 
     const tmpPath = `${kTmpFolder}/${pathToFile.replace(/\.\./gi, () => '.')}`;
-    const uglyTmpFile = `${tmpPath}${filename}_ugly.${extension}`;
-    const prettyTmpFile = `${tmpPath}${filename}.${extension}`;
+    const tmpFile = `${tmpPath}/${filename}_ugly.${extension}`;
 
     // Make sure folder exists in the temp space
     await fs.promises.mkdir(tmpPath, { recursive: true });
 
+    // Run prettier
+    const prettyData = prettierFormat(data);
+
     // Write the raw, unlinted / prettified file contents to a temporary space.
-    await writeFileAsync(uglyTmpFile, data, {
+    await writeFileAsync(tmpFile, prettyData, {
       flag: 'w+',
     });
-
-    // Run eslint --fix
-    await exec(`${kWfReactFolder}/node_modules/.bin/eslint --fix ${uglyTmpFile}`);
-
-    // Run prettier
-    await exec(`${kWfReactFolder}/node_modules/.bin/prettier ${uglyTmpFile} > ${prettyTmpFile}`);
 
     // Return a function to finalize the output from TMP.
     return async () => {
       // Write to final output
       await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
-      exec(`mv ${prettyTmpFile} ${path}`);
+      await exec(`mv ${tmpFile} ${path}`);
+
+      // Need to run eslint on the final output, since the linter setup ignores our temp folder.
+      child_process.execSync(
+        `${kWfReactFolder}/node_modules/.bin/eslint --fix --rulesdir ${kWfReactFolder}/tools/code-gen --rule 'lines-between-class-members: 2' ${path}`,
+      );
     };
   } catch (error) {
     throw new Error(`Error writeAndPrettify ${path}: ${error}`);
@@ -269,6 +297,5 @@ export function restoreWhitespace(oldText: string, newText: string): string {
       hunks[j].newStart += lineOffset;
     }
   }
-  const result = diff.applyPatch(oldText, patch as [diff.ParsedDiff]);
-  return result;
+  return diff.applyPatch(oldText, patch as [diff.ParsedDiff])
 }

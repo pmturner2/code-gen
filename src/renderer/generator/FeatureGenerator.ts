@@ -1,7 +1,12 @@
-import { kConfigDefaultsPath, kOptimizationDefaultsPath, kOptimizationsPath } from '../Constants';
+import {
+  kConfigDefaultsPath,
+  kConfigModelPath,
+  kOptimizationDefaultsPath,
+  kOptimizationsPath,
+} from '../Constants';
 import { IOptimization, IProgressStep, IServerConfig } from '../Types';
 import { executeSteps } from './FileGenerator';
-import { addEnumMember, addObjectMember } from './TypescriptUtils';
+import { addClassMember, addEnumMember, addObjectMember } from './TypescriptUtils';
 import { updateJson } from './Utils';
 
 async function updateOptimization(optimization: IOptimization): Promise<() => void> {
@@ -21,6 +26,15 @@ async function updateOptimizationDefaults(optimization: IOptimization): Promise<
   return updateJson(kOptimizationDefaultsPath, optimization.name, {
     experiment: optimization.name,
     variables: JSON.parse(optimization.variables),
+  });
+}
+
+async function updateConfig(config: IServerConfig): Promise<() => void> {
+  return addClassMember({
+    filename: kConfigModelPath,
+    className: 'ConfigModel',
+    newKey: config.name,
+    newValue: JSON.parse(config.defaultValue),
   });
 }
 
@@ -92,14 +106,14 @@ export async function generateFeature(feature: {
     }
 
     if (feature.configs && feature.configs.length > 0) {
-      // submissionProgress.push({
-      //   description: `Updating Server Configs`,
-      //   execute: async () => {
-      //     for (const config of feature.configs) {
-      //       finalizeFunctions.push(await updateConfig(config));
-      //     }
-      //   },
-      // });
+      submissionProgress.push({
+        description: `Updating Server Configs`,
+        execute: async () => {
+          for (const config of feature.configs) {
+            finalizeFunctions.push(await updateConfig(config));
+          }
+        },
+      });
 
       submissionProgress.push({
         description: `Updating Server Config Defaults`,
