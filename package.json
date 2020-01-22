@@ -10,6 +10,8 @@
   },
   "devDependencies": {
     "@react-native-community/eslint-config": "^0.0.5",
+    "@types/diff": "^4.0.2",
+    "@types/prettier": "^1.19.0",
     "@types/react": "16.9.16",
     "@types/react-dom": "16.9.4",
     "@typescript-eslint/eslint-plugin": "2.9.0",

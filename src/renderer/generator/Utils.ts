@@ -1,6 +1,8 @@
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
+import * as diff from 'diff';
 import fs from 'fs';
+import * as prettier from 'prettier';
 import { kTmpFolder, kWfReactFolder } from '../Constants';
 import { ImportMap } from '../Types';
 
@@ -229,5 +231,44 @@ export function cloneSet<V>(set: Set<V>): Set<V> {
   set.forEach(v => {
     result.add(v);
   });
+  return result;
+}
+
+export function prettierFormat(text: string): string {
+  return prettier.format(text, {
+    semi: true,
+    trailingComma: 'all',
+    singleQuote: true,
+    parser: 'typescript',
+    printWidth: 100,
+    tabWidth: 2,
+  });
+}
+
+/**
+ * Restores the blank lines stripped by the typescript compiler.
+ *
+ * @param oldText original .ts source
+ * @param newText updated .ts source
+ */
+export function restoreWhitespace(oldText: string, newText: string): string {
+  const patch = diff.parsePatch(diff.createPatch('file', oldText, newText, '', ''));
+  const hunks = patch[0].hunks;
+  for (let i = 0; i < hunks.length; ++i) {
+    let lineOffset = 0;
+    const hunk = hunks[i];
+    hunk.lines = hunk.lines.map((line: string) => {
+      if (line === '-') {
+        lineOffset++;
+        return ' ';
+      }
+      return line;
+    });
+    hunk.newLines += lineOffset;
+    for (let j = i + 1; j < hunks.length; ++j) {
+      hunks[j].newStart += lineOffset;
+    }
+  }
+  const result = diff.applyPatch(oldText, patch as [diff.ParsedDiff]);
   return result;
 }

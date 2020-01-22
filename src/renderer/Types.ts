@@ -80,5 +80,5 @@ export interface IOptimization {
 
 export interface IServerConfig {
   name: string;
-  defaultValue: string | number;
+  defaultValue: string; // should be json or a single value. e.g. 8 or "8" or { ... }
 }

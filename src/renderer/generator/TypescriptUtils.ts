@@ -1,6 +1,10 @@
-import * as diff from 'diff';
 import * as ts from 'typescript';
-import { generateInterfaceName, writeAndPrettify } from './Utils';
+import {
+  generateInterfaceName,
+  prettierFormat,
+  restoreWhitespace,
+  writeAndPrettify,
+} from './Utils';
 
 function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, string>) {
   let result = '';
@@ -74,33 +78,6 @@ export function generateInterfaceFromJson(
 }
 
 /**
- * Restores the blank lines stripped by the typescript compiler.
- *
- * @param oldText original .ts source
- * @param newText updated .ts source
- */
-function restoreWhitespace(oldText: string, newText: string): string {
-  const patch = diff.parsePatch(diff.createPatch('file', oldText, newText, '', ''));
-  const hunks = patch[0].hunks;
-  for (let i = 0; i < hunks.length; ++i) {
-    let lineOffset = 0;
-    const hunk = hunks[i];
-    hunk.lines = hunk.lines.map((line: string) => {
-      if (line === '-') {
-        lineOffset++;
-        return ' ';
-      }
-      return line;
-    });
-    hunk.newLines += lineOffset;
-    for (let j = i + 1; j < hunks.length; ++j) {
-      hunks[j].newStart += lineOffset;
-    }
-  }
-  return diff.applyPatch(oldText, patch);
-}
-
-/**
  * Helper to process a typescript file and transform its contents.
  *
  * @param filename name of typescript file to transform
@@ -114,7 +91,6 @@ async function transformTypescript(
 ): Promise<() => void> {
   const program = ts.createProgram([filename], { allowJs: false, removeComments: false });
   const sourceFile = program.getSourceFile(filename);
-
   const originalText = sourceFile.text;
 
   const transformer = <T extends ts.Node>(context: ts.TransformationContext) => (rootNode: T) => {
@@ -138,7 +114,8 @@ async function transformTypescript(
   });
 
   const output = printer.printNode(ts.EmitHint.SourceFile, transformedNode, sourceFile);
-  const outputWithWhitespace = restoreWhitespace(originalText, output);
+  const prettierOutput = prettierFormat(output);
+  const outputWithWhitespace = restoreWhitespace(originalText, prettierOutput);
   return writeAndPrettify(outputWithWhitespace, filename);
 }
 

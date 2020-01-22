@@ -3,13 +3,14 @@ import * as React from 'react';
 import { InjectableCategory } from '../Constants';
 import { generateFeature } from '../generator/FeatureGenerator';
 import { generateCapitalizedCamelCaseName, uppercaseFirstLetter } from '../generator/Utils';
-import { IInjectable, INewInjectable, IOptimization, IProgressStep } from '../Types';
+import { IInjectable, INewInjectable, IOptimization, IProgressStep, IServerConfig } from '../Types';
 import { FormAddMultipleSection } from './common/FormAddMultipleSection';
 import { FormSection } from './common/FormSection';
 import { TextInput } from './common/TextInput';
 import { DialogCoordinatorContext } from './DialogCoordinator';
 import { OptimizationForm } from './OptimizationForm';
 import { ProgressDialog } from './ProgressDialog';
+import { ServerConfigForm } from './ServerConfigForm';
 
 // const AddEOSSection = FormAddMultipleSection<IOptimization>
 
@@ -79,9 +80,14 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
   const dialogCoordinator = React.useContext(DialogCoordinatorContext);
 
   const [optimizations, setOptimizations] = React.useState<IOptimization[]>([]);
+  const [configs, setConfigs] = React.useState<IServerConfig[]>([]);
 
   const handleOptimizationsChange = (optimizations: IOptimization[]) => {
     setOptimizations([...optimizations]);
+  };
+
+  const handleConfigsChange = (configs: IServerConfig[]) => {
+    setConfigs([...configs]);
   };
 
   function validateFormItem(name: string, value: string) {
@@ -138,6 +144,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
       await generateFeature({
         name: generateCapitalizedCamelCaseName(name),
         optimizations,
+        configs,
         onProgress: onSubmissionProgress,
       });
     } catch (error) {
@@ -179,6 +186,14 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           onChange={handleOptimizationsChange}
           elementCreateForm={OptimizationForm}
           defaultElement={{ name: '', variables: '{}' }}
+        />
+
+        <FormAddMultipleSection
+          title="Server Configs"
+          elementName="Config"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
         />
 
         <FormSection>

@@ -7,6 +7,7 @@ interface IProps {
   value: string;
   placeholder?: string;
   className?: string;
+  required?: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 
   // Returns true if input is valid

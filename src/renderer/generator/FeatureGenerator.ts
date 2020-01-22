@@ -1,7 +1,7 @@
-import { kOptimizationDefaultsPath, kOptimizationsPath } from '../Constants';
-import { IOptimization, IProgressStep } from '../Types';
+import { kConfigDefaultsPath, kOptimizationDefaultsPath, kOptimizationsPath } from '../Constants';
+import { IOptimization, IProgressStep, IServerConfig } from '../Types';
 import { executeSteps } from './FileGenerator';
-import { addEnumMember } from './TypescriptUtils';
+import { addEnumMember, addObjectMember } from './TypescriptUtils';
 import { updateJson } from './Utils';
 
 async function updateOptimization(optimization: IOptimization): Promise<() => void> {
@@ -24,6 +24,15 @@ async function updateOptimizationDefaults(optimization: IOptimization): Promise<
   });
 }
 
+async function updateConfigDefaults(config: IServerConfig): Promise<() => void> {
+  return addObjectMember({
+    filename: kConfigDefaultsPath,
+    objectName: 'ConfigDefaults',
+    newKey: config.name,
+    newValue: JSON.parse(config.defaultValue),
+  });
+}
+
 /**
  * Generates a new `Service` class, and properly updates the `wf-react` codebase
  *
@@ -31,6 +40,7 @@ async function updateOptimizationDefaults(optimization: IOptimization): Promise<
  */
 export async function generateFeature(feature: {
   name: string;
+  configs: IServerConfig[];
   optimizations: IOptimization[];
   onProgress: (progress: IProgressStep[]) => void;
 }): Promise<void> {
@@ -76,6 +86,26 @@ export async function generateFeature(feature: {
         execute: async () => {
           for (const optimization of feature.optimizations) {
             finalizeFunctions.push(await updateOptimizationDefaults(optimization));
+          }
+        },
+      });
+    }
+
+    if (feature.configs && feature.configs.length > 0) {
+      // submissionProgress.push({
+      //   description: `Updating Server Configs`,
+      //   execute: async () => {
+      //     for (const config of feature.configs) {
+      //       finalizeFunctions.push(await updateConfig(config));
+      //     }
+      //   },
+      // });
+
+      submissionProgress.push({
+        description: `Updating Server Config Defaults`,
+        execute: async () => {
+          for (const config of feature.configs) {
+            finalizeFunctions.push(await updateConfigDefaults(config));
           }
         },
       });
