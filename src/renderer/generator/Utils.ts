@@ -1,6 +1,5 @@
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
-import * as child_process from 'child_process';
 import * as diff from 'diff';
 import fs from 'fs';
 import * as prettier from 'prettier';
@@ -223,23 +222,25 @@ export async function writeAndPrettify(data: string, path: string): Promise<() =
     await fs.promises.mkdir(tmpPath, { recursive: true });
 
     // Run prettier
-    const prettyData = prettierFormat(data);
+    const prettyData = prettierFormat(data, extension === 'json' ? 'json' : 'typescript');
 
     // Write the raw, unlinted / prettified file contents to a temporary space.
     await writeFileAsync(tmpFile, prettyData, {
       flag: 'w+',
     });
 
+    if (extension !== 'json') {
+      // eslint
+      await exec(
+        `${kWfReactFolder}/node_modules/.bin/eslint --fix --no-ignore --rulesdir ${kWfReactFolder}/tools/code-gen --rule 'lines-between-class-members: 2' ${tmpFile}`,
+      );
+    }
+
     // Return a function to finalize the output from TMP.
     return async () => {
       // Write to final output
       await fs.promises.mkdir(`${pathToFile}`, { recursive: true });
       await exec(`mv ${tmpFile} ${path}`);
-
-      // Need to run eslint on the final output, since the linter setup ignores our temp folder.
-      child_process.execSync(
-        `${kWfReactFolder}/node_modules/.bin/eslint --fix --rulesdir ${kWfReactFolder}/tools/code-gen --rule 'lines-between-class-members: 2' ${path}`,
-      );
     };
   } catch (error) {
     throw new Error(`Error writeAndPrettify ${path}: ${error}`);
@@ -262,12 +263,12 @@ export function cloneSet<V>(set: Set<V>): Set<V> {
   return result;
 }
 
-export function prettierFormat(text: string): string {
+export function prettierFormat(text: string, parser: 'json' | 'typescript' = 'typescript'): string {
   return prettier.format(text, {
     semi: true,
     trailingComma: 'all',
     singleQuote: true,
-    parser: 'typescript',
+    parser,
     printWidth: 100,
     tabWidth: 2,
   });
@@ -297,5 +298,5 @@ export function restoreWhitespace(oldText: string, newText: string): string {
       hunks[j].newStart += lineOffset;
     }
   }
-  return diff.applyPatch(oldText, patch as [diff.ParsedDiff])
+  return diff.applyPatch(oldText, patch as [diff.ParsedDiff]);
 }

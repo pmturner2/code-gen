@@ -1,5 +1,4 @@
 import * as ts from 'typescript';
-import { kConfigModelPath } from '../Constants';
 import {
   generateInterfaceName,
   prettierFormat,
@@ -299,7 +298,7 @@ export async function addClassMember(params: {
         }
       });
       const typeNode = getType(params.newValue);
-      const decorators = params.decorators.map(decoString =>
+      const decorators = params.decorators?.map(decoString =>
         ts.createDecorator(ts.createIdentifier(decoString)),
       );
       const newEntry = ts.createProperty(
@@ -328,17 +327,17 @@ export async function addClassMember(params: {
 }
 
 // TEST CODE
-async function f() {
-  const r = await addClassMember({
-    filename: kConfigModelPath,
-    className: 'ConfigModel',
-    newValue: {
-      this: 3,
-    },
-    newKey: `best${Math.floor(Math.random() * 10000)}`,
-    decorators: ['observable', 'serializable'],
-  });
-  r();
-}
+// async function f() {
+//   const r = await addClassMember({
+//     filename: kConfigModelPath,
+//     className: 'ConfigModel',
+//     newValue: {
+//       this: 3,
+//     },
+//     newKey: `best${Math.floor(Math.random() * 10000)}`,
+//     decorators: ['observable', 'serializable'],
+//   });
+//   r();
+// }
 
-f();
+// f();

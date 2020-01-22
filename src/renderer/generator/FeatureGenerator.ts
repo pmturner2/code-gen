@@ -35,6 +35,7 @@ async function updateConfig(config: IServerConfig): Promise<() => void> {
     className: 'ConfigModel',
     newKey: config.name,
     newValue: JSON.parse(config.defaultValue),
+    decorators: ['observable', 'serializable'],
   });
 }
 
@@ -128,7 +129,9 @@ export async function generateFeature(feature: {
     submissionProgress.push({
       description: `Copying and finalizing output`,
       execute: async () => {
-        finalizeFunctions.forEach(async f => await f());
+        for (const f of finalizeFunctions) {
+          await f();
+        }
       },
     });
     await executeSteps(submissionProgress, feature.onProgress);

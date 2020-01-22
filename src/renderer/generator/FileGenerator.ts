@@ -331,7 +331,9 @@ async function internalGenerateInjectableClass(
     submissionProgress.push({
       description: `Copying and finalizing output`,
       execute: async () => {
-        finalizeFunctions.forEach(async f => await f());
+        for (const f of finalizeFunctions) {
+          await f();
+        }
       },
     });
     await executeSteps(submissionProgress, onProgress);
