@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { IServerConfig } from '../Types';
-import { MultiLineTextInput } from './common/MultiLineTextInput';
+import { JsonTextInput } from './common/JsonTextInput';
 import { TextInput } from './common/TextInput';
 
 interface IProps {
@@ -41,7 +41,7 @@ export const ServerConfigForm: React.FunctionComponent<IProps> = props => {
         className={'smalltop'}
         required={true}
       />
-      <MultiLineTextInput
+      <JsonTextInput
         label="Default Value (json or primitive)"
         name="defaultValue"
         placeholder="e.g. `{}`"

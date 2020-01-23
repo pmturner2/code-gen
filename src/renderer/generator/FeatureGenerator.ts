@@ -1,80 +1,10 @@
-import {
-  kConfigDefaultsPath,
-  kConfigModelPath,
-  kOptimizationDefaultsPath,
-  kOptimizationsPath,
-} from '../Constants';
 import { IOptimization, IProgressStep, IServerConfig } from '../Types';
+import { updateConfig, updateConfigDefaults } from './ConfigGenerator';
 import { executeSteps } from './FileGenerator';
-import { addClassMember, addEnumMember, addObjectMember } from './TypescriptUtils';
-import { updateJson } from './Utils';
-
-async function updateOptimization(optimization: IOptimization): Promise<() => void> {
-  const enumName = optimization.fetchOnWarmLaunch
-    ? 'WarmLaunchOptimizations'
-    : 'ColdLaunchOptimizations';
-  return addEnumMember({
-    filename: kOptimizationsPath,
-    enumName,
-    newKey: optimization.key,
-    newValue: optimization.name,
-    sortEnum: true,
-  });
-}
-
-async function updateOptimizationDefaults(optimization: IOptimization): Promise<() => void> {
-  return updateJson(kOptimizationDefaultsPath, optimization.name, {
-    experiment: optimization.name,
-    variables: JSON.parse(optimization.variables),
-  });
-}
-
-async function updateConfig(config: IServerConfig): Promise<() => void> {
-  return addClassMember({
-    filename: kConfigModelPath,
-    className: 'ConfigModel',
-    newKey: config.name,
-    newValue: JSON.parse(config.defaultValue),
-    decorators: ['serializable', 'observable'],
-  });
-}
-
-async function updateConfigDefaults(config: IServerConfig): Promise<() => void> {
-  return addObjectMember({
-    filename: kConfigDefaultsPath,
-    objectName: 'ConfigDefaults',
-    newKey: config.name,
-    newValue: JSON.parse(config.defaultValue),
-  });
-}
-
-// // TEST CODE
-// async function f() {
-//   const c = {
-//     name: `best${Math.floor(Math.random() * 10000)}`,
-//     defaultValue: `{
-//       "test": "bac",
-//       "waaah": ["cheese", "burger", "tests"],
-//       "Okayy": [
-//         {
-//           "test": 2
-//         },
-//         {
-//           "test": 3
-//         }
-//       ]
-//     }`,
-//   };
-//   const r = await updateConfig(c);
-//   const r2 = await updateConfigDefaults(c);
-//   await r();
-//   await r2();
-// }
-
-// f();
+import { updateOptimization, updateOptimizationDefaults } from './OptimizationGenerator';
 
 /**
- * Generates a new `Service` class, and properly updates the `wf-react` codebase
+ * Generates a new Feature, and properly updates the `wf-react` codebase
  *
  * @param item params to generate from
  */
@@ -87,29 +17,6 @@ export async function generateFeature(feature: {
   const submissionProgress: IProgressStep[] = [];
   try {
     const finalizeFunctions = new Array<() => void>();
-
-    // submissionProgress.push({
-    //   description: `Adding ${item.serviceIdentifier} to App Types`,
-    //   execute: async () => {
-    //     finalizeFunctions.push(await updateAppTypes(item.serviceIdentifier));
-    //   },
-    // });
-
-    // submissionProgress.push({
-    //   description: `Adding ${item.serviceIdentifier} to Dependency Container`,
-    //   execute: async () => {
-    //     finalizeFunctions.push(
-    //       await updateDependencyContainer(item, kServiceDependencyContainerPath, false),
-    //     );
-    //   },
-    // });
-
-    // submissionProgress.push({
-    //   description: `Writing class file for ${item.importPath}/${item.name}.ts`,
-    //   execute: async () => {
-    //     finalizeFunctions.push(await writeServiceClass(item, kServiceTemplateFile));
-    //   },
-    // });
 
     if (feature.optimizations && feature.optimizations.length > 0) {
       submissionProgress.push({

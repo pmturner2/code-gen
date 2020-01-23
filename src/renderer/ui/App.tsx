@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { AddConfigsForm } from './AddConfigsForm';
+import { AddOptimizationsForm } from './AddOptimizationsForm';
 import { AppHeader } from './AppHeader';
 import { DialogCoordinator } from './DialogCoordinator';
 import { DomainStoreCreateForm } from './DomainStoreCreateForm';
@@ -11,6 +13,16 @@ import { ISidePanelOption, ISidePanelSection, SidePanel } from './SidePanel';
 
 interface IState {
   mainContent: React.ReactElement<any>;
+}
+
+enum SidePanelOption {
+  Home = 'Home',
+  Service = 'Generate Service',
+  ScreenStore = 'Generate Screen Store',
+  DomainStore = 'Generate Domain Store',
+  Feature = 'Generate Feature',
+  Optimizations = 'Add EOS Optimizations',
+  Configs = 'Add Server Configs',
 }
 
 export class App extends React.Component<{}, IState> {
@@ -42,22 +54,28 @@ export class App extends React.Component<{}, IState> {
   private sidePanelSections(): ISidePanelSection[] {
     return [
       {
-        options: [this.createSidePanelOption('Home')],
+        options: [this.createSidePanelOption(SidePanelOption.Home)],
       },
       {
         options: [
-          this.createSidePanelOption('Generate Service'),
-          this.createSidePanelOption('Generate Domain Store'),
-          this.createSidePanelOption('Generate Screen Store'),
+          this.createSidePanelOption(SidePanelOption.Service),
+          this.createSidePanelOption(SidePanelOption.DomainStore),
+          this.createSidePanelOption(SidePanelOption.ScreenStore),
         ],
       },
       {
-        options: [this.createSidePanelOption('Generate Feature')],
+        options: [this.createSidePanelOption(SidePanelOption.Feature)],
+      },
+      {
+        options: [
+          this.createSidePanelOption(SidePanelOption.Optimizations),
+          this.createSidePanelOption(SidePanelOption.Configs),
+        ],
       },
     ];
   }
 
-  private createSidePanelOption(title: string): ISidePanelOption {
+  private createSidePanelOption(title: SidePanelOption): ISidePanelOption {
     return {
       id: title,
       onClick: () => {
@@ -67,33 +85,28 @@ export class App extends React.Component<{}, IState> {
     };
   }
 
-  private navigateTo = (screen: string): void => {
+  private navigateTo = (screen: SidePanelOption): void => {
+    this.setState({
+      mainContent: this.getContent(screen),
+    });
+  };
+
+  private getContent = (screen: SidePanelOption): React.ReactElement<any> => {
     switch (screen) {
-      case 'Home':
-        this.setState({
-          mainContent: <HomeContent navigate={this.navigateTo} />,
-        });
-        break;
-      case 'Generate Service':
-        this.setState({
-          mainContent: <ServiceCreateForm navigate={this.navigateTo} />,
-        });
-        break;
-      case 'Generate Domain Store':
-        this.setState({
-          mainContent: <DomainStoreCreateForm navigate={this.navigateTo} />,
-        });
-        break;
-      case 'Generate Screen Store':
-        this.setState({
-          mainContent: <ScreenStoreCreateForm navigate={this.navigateTo} />,
-        });
-        break;
-      case 'Generate Feature':
-        this.setState({
-          mainContent: <FeatureCreateForm navigate={this.navigateTo} />,
-        });
-        break;
+      case SidePanelOption.Home:
+        return <HomeContent navigate={this.navigateTo} />;
+      case SidePanelOption.Service:
+        return <ServiceCreateForm navigate={this.navigateTo} />;
+      case SidePanelOption.DomainStore:
+        return <DomainStoreCreateForm navigate={this.navigateTo} />;
+      case SidePanelOption.ScreenStore:
+        return <ScreenStoreCreateForm navigate={this.navigateTo} />;
+      case SidePanelOption.Feature:
+        return <FeatureCreateForm navigate={this.navigateTo} />;
+      case SidePanelOption.Optimizations:
+        return <AddOptimizationsForm navigate={this.navigateTo} />;
+      case SidePanelOption.Configs:
+        return <AddConfigsForm navigate={this.navigateTo} />;
     }
   };
 }

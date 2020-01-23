@@ -25,48 +25,6 @@ interface IProps {
   forceAddDependencies?: () => string[];
 }
 
-function getFullImportPath(importPath: string, category: InjectableCategory): string {
-  switch (category) {
-    case 'Service':
-      return `services/${importPath}`;
-    case 'DomainStore':
-      return `domains/${importPath}`;
-    case 'ScreenStore':
-      return `screens/${importPath}`;
-  }
-}
-
-function getInterfaceName(name: string, category: InjectableCategory) {
-  switch (category) {
-    case 'Service':
-      return `I${name}Service`;
-    case 'DomainStore':
-    case 'ScreenStore':
-      return `I${name}Store`;
-  }
-}
-
-function getClassName(name: string, category: InjectableCategory) {
-  switch (category) {
-    case 'Service':
-      return `${name}Service`;
-    case 'DomainStore':
-    case 'ScreenStore':
-      return `${name}Store`;
-  }
-}
-
-function getServiceIdentifier(name: string, category: InjectableCategory) {
-  switch (category) {
-    case 'Service':
-      return `ServiceTypes.${name}`;
-    case 'DomainStore':
-      return `DomainStoreTypes.${name}`;
-    case 'ScreenStore':
-      return `ScreenStoreTypes.${name}`;
-  }
-}
-
 /**
  * Form for generating Service, DomainStore, or ScreenStore classes
  */
