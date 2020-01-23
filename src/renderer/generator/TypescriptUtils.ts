@@ -7,6 +7,7 @@ import {
   writeTempData,
 } from './Utils';
 
+// TODO: use typescript compiler api?
 function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, string>) {
   let result = '';
   const nodeType = typeof node;
@@ -47,6 +48,7 @@ function addNodeToInterface(node: any, key: string, interfaceMap: Map<string, st
   return result;
 }
 
+// TODO: use typescript compiler api?
 function generateInternalInterface(
   interfaceName: string,
   jsonObject: object,
@@ -61,6 +63,7 @@ function generateInternalInterface(
   return result;
 }
 
+// TODO: use typescript compiler api?
 export function generateInterfaceFromJson(
   interfaceName: string,
   jsonString: string,
@@ -129,6 +132,43 @@ function getName(a: ts.PropertyName) {
   return undefined;
 }
 
+function getTypeNode(node: ts.Node, typeChecker: ts.TypeChecker): ts.TypeNode {
+  if (ts.isVariableStatement(node)) {
+    const variableStatement = node as ts.VariableStatement;
+    const declaration = variableStatement.declarationList.declarations[0];
+    return getTypeNode(declaration.initializer, typeChecker);
+  } else if (ts.isArrayLiteralExpression(node)) {
+    const arrayLiteralExpression = node as ts.ArrayLiteralExpression;
+    const t = getTypeNode(arrayLiteralExpression.elements[0], typeChecker);
+    return ts.createArrayTypeNode(t);
+  } else if (ts.isObjectLiteralExpression(node)) {
+    const members: ts.TypeElement[] = [];
+    node.forEachChild(child => {
+      if (ts.isPropertyAssignment(child)) {
+        const childPropertyAssignment = child as ts.PropertyAssignment;
+        const childType = getTypeNode(childPropertyAssignment.initializer, typeChecker);
+        const name = getName(childPropertyAssignment.name) as string;
+        const childPropertySignature = ts.createPropertySignature(
+          childPropertyAssignment.modifiers,
+          name,
+          childPropertyAssignment.questionToken,
+          childType,
+          undefined,
+        );
+        members.push(childPropertySignature);
+      }
+    });
+    return ts.createTypeLiteralNode(members);
+  } else if (ts.isLiteralExpression(node)) {
+    // Primitive:
+    const t = typeChecker.getTypeAtLocation(node);
+    const baseType = typeChecker.getBaseTypeOfLiteralType(t);
+    return typeChecker.typeToTypeNode(baseType);
+  } else {
+    throw new Error('Unable to determine type of node');
+  }
+}
+
 /**
  * Leverage typescript program to determine the type of the value.
  * Inefficient because it writes out the string to disk and reads / parses it in typescript.
@@ -149,22 +189,30 @@ function getType(data: any): ts.TypeNode {
 
   sourceFile.forEachChild((node: ts.Node) => {
     if (ts.isVariableStatement(node)) {
-      const variableStatement = node as ts.VariableStatement;
-      const declaration = variableStatement.declarationList.declarations[0];
-      if (ts.isArrayLiteralExpression(declaration.initializer)) {
-        const arrayLiteralExpression = declaration.initializer as ts.ArrayLiteralExpression;
-        const t = typeChecker.getTypeAtLocation(arrayLiteralExpression.elements[0]);
-        const baseType = typeChecker.getBaseTypeOfLiteralType(t);
-        typeNode = ts.createArrayTypeNode(typeChecker.typeToTypeNode(baseType));
-      } else {
-        // Primitive or Object:
-        const t = typeChecker.getTypeAtLocation(declaration.initializer);
-        const baseType = typeChecker.getBaseTypeOfLiteralType(t);
-        typeNode = typeChecker.typeToTypeNode(baseType);
+      const type = getTypeNode(node, typeChecker);
+      if (type) {
+        typeNode = type;
       }
     }
   });
   return typeNode;
+}
+
+function createLiteral(data: any): ts.Expression {
+  if (Array.isArray(data)) {
+    const elements = (data as any[]).map(el => createLiteral(el));
+    return ts.createArrayLiteral(elements);
+  } else if (typeof data === 'object') {
+    const keys = Object.keys(data);
+    const elements = keys.map(key => {
+      const keyLiteral = ts.createLiteral(key);
+      const valueLiteral = createLiteral(data[key]);
+      return ts.createPropertyAssignment(keyLiteral, valueLiteral);
+    });
+    return ts.createObjectLiteral(elements);
+  }
+  // base case is non object or array.
+  return ts.createLiteral(data);
 }
 
 /**
@@ -242,10 +290,7 @@ export async function addObjectMember(params: {
       }
       const initializer = variableDeclaration.initializer as ts.ObjectLiteralExpression;
 
-      const newEntry = ts.createPropertyAssignment(
-        params.newKey,
-        ts.createLiteral(params.newValue),
-      );
+      const newEntry = ts.createPropertyAssignment(params.newKey, createLiteral(params.newValue));
       const newObjectMembers = [newEntry];
 
       initializer.properties.forEach((child: ts.Node) => {
@@ -298,9 +343,20 @@ export async function addClassMember(params: {
         }
       });
       const typeNode = getType(params.newValue);
-      const decorators = params.decorators?.map(decoString =>
-        ts.createDecorator(ts.createIdentifier(decoString)),
-      );
+      const decorators = params.decorators?.map(decoString => {
+        const decoIdentifier = ts.createIdentifier(decoString);
+        if (decoString === 'serializable') {
+          // TODO: make this handle more cases. 'object' and 'raw'?
+          if (ts.isArrayTypeNode(typeNode)) {
+            const primitiveCall = ts.createCall(ts.createIdentifier('primitive'), undefined, []);
+            const listCall = ts.createCall(ts.createIdentifier('list'), undefined, [primitiveCall]);
+            const call = ts.createCall(decoIdentifier, undefined, [listCall]);
+            return ts.createDecorator(call);
+          }
+        }
+        return ts.createDecorator(decoIdentifier);
+      });
+
       const newEntry = ts.createProperty(
         decorators,
         [],
@@ -325,19 +381,3 @@ export async function addClassMember(params: {
     },
   );
 }
-
-// TEST CODE
-// async function f() {
-//   const r = await addClassMember({
-//     filename: kConfigModelPath,
-//     className: 'ConfigModel',
-//     newValue: {
-//       this: 3,
-//     },
-//     newKey: `best${Math.floor(Math.random() * 10000)}`,
-//     decorators: ['observable', 'serializable'],
-//   });
-//   r();
-// }
-
-// f();

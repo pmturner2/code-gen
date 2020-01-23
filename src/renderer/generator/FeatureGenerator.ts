@@ -35,7 +35,7 @@ async function updateConfig(config: IServerConfig): Promise<() => void> {
     className: 'ConfigModel',
     newKey: config.name,
     newValue: JSON.parse(config.defaultValue),
-    decorators: ['observable', 'serializable'],
+    decorators: ['serializable', 'observable'],
   });
 }
 
@@ -47,6 +47,31 @@ async function updateConfigDefaults(config: IServerConfig): Promise<() => void> 
     newValue: JSON.parse(config.defaultValue),
   });
 }
+
+// // TEST CODE
+// async function f() {
+//   const c = {
+//     name: `best${Math.floor(Math.random() * 10000)}`,
+//     defaultValue: `{
+//       "test": "bac",
+//       "waaah": ["cheese", "burger", "tests"],
+//       "Okayy": [
+//         {
+//           "test": 2
+//         },
+//         {
+//           "test": 3
+//         }
+//       ]
+//     }`,
+//   };
+//   const r = await updateConfig(c);
+//   const r2 = await updateConfigDefaults(c);
+//   await r();
+//   await r2();
+// }
+
+// f();
 
 /**
  * Generates a new `Service` class, and properly updates the `wf-react` codebase
