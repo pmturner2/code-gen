@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core';
+import { Button, Divider } from '@material-ui/core';
 import * as React from 'react';
 import { InjectableCategory } from '../Constants';
 import { generateFeature } from '../generator/FeatureGenerator';
@@ -145,7 +145,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementCreateForm={OptimizationForm}
           defaultElement={{ name: '', variables: '{}' }}
         />
-
+        <Divider />
         <FormAddMultipleSection
           title="Server Configs"
           elementName="Config"
@@ -153,7 +153,47 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementCreateForm={ServerConfigForm}
           defaultElement={{ name: '', defaultValue: '{}' }}
         />
-
+        <Divider />
+        <FormAddMultipleSection
+          title="Zynga Api Calls (TODO)"
+          elementName="Api Call"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
+        />
+        <Divider />
+        <FormAddMultipleSection
+          title="Analytics (TODO)"
+          elementName="Tracking Call"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
+        />
+        <Divider />
+        <FormAddMultipleSection
+          title="Screens (TODO)"
+          elementName="Screen"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
+        />
+        <Divider />
+        <FormAddMultipleSection
+          title="Carousel Cells (TODO)"
+          elementName="Cell"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
+        />
+        <Divider />
+        <FormAddMultipleSection
+          title="Popups (TODO)"
+          elementName="Popup"
+          onChange={handleConfigsChange}
+          elementCreateForm={ServerConfigForm}
+          defaultElement={{ name: '', defaultValue: '{}' }}
+        />
+        <Divider />
         <FormSection>
           <Button
             type="submit"
