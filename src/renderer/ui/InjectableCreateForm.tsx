@@ -148,8 +148,14 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
     props.navigate('Home');
   };
 
-  const handleDependencyChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setDependencies(event.target.value as string[]);
+  const handleDependencyChange = (
+    injectableCategory: InjectableCategory,
+    selectedForCategory: string[],
+  ) => {
+    const availableForCategory = availableDependencies.get(injectableCategory);
+    const selectedForOtherCategories = dependencies.filter(dep => !availableForCategory.has(dep));
+    // Make sure when we change one category (e.g. Services) that we don't effect others (e.g. Domains)
+    setDependencies([...selectedForOtherCategories, ...selectedForCategory]);
   };
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,14 +214,16 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
         <FormSection title="Dependencies">
           {props.dependencyCategories.map(dependencyCategory => {
             const items = Array.from(availableDependencies.get(dependencyCategory).values());
-
+            const changeHandler = (event: React.ChangeEvent<{ value: unknown }>) => {
+              handleDependencyChange(dependencyCategory, event.target.value as string[]);
+            };
             return (
               <DependencySelector
-                category={category}
+                category={dependencyCategory}
                 selectedItems={getSelectedDependencies(dependencyCategory)}
                 items={items}
-                onChange={handleDependencyChange}
-                key={category}
+                onChange={changeHandler}
+                key={dependencyCategory}
               />
             );
           })}
