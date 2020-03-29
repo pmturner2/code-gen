@@ -10,11 +10,8 @@ export interface __INTERFACE_NAME__ {
 
 @injectable()
 export class __NAME__ extends InjectableBase implements __INTERFACE_NAME__ {
-  __DEPENDENCY_MEMBERS__;
-
   constructor(__CONSTRUCTOR_INJECTION__) {
     super(__SERVICE_IDENTIFIER__);
-    __CONSTRUCTOR_MEMBER_ASSIGNMENTS__
     this.awaitDependenciesAndInit(arguments);
   }
 
