@@ -151,7 +151,7 @@ export async function generateService(
 ): Promise<void> {
   const submissionProgress: IProgressStep[] = [];
   try {
-    const finalizeFunctions = new Array<() => void>();
+    const finalizeFunctions: Array<() => void> = [];
 
     submissionProgress.push({
       description: `Adding ${item.serviceIdentifier} to App Types`,
@@ -186,7 +186,7 @@ export async function generateService(
     }
 
     submissionProgress.push({
-      description: `Copying and finalizing output`,
+      description: 'Copying and finalizing output',
       execute: async () => {
         finalizeFunctions.forEach(async f => await f());
       },

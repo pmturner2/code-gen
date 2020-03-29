@@ -27,11 +27,10 @@ interface IProps<T> {
 export function FormAddMultiple<T>(props: IProps<T>) {
   const [submissionProgress, setSubmissionProgress] = React.useState([]);
   const dialogCoordinator = React.useContext(DialogCoordinatorContext);
-
   const [elements, setElements] = React.useState<T[]>([]);
 
-  const handleElementsChange = (elements: T[]) => {
-    setElements([...elements]);
+  const handleElementsChange = (newElements: T[]) => {
+    setElements([...newElements]);
   };
 
   const onSubmissionProgress = (progress: IProgressStep[]) => {

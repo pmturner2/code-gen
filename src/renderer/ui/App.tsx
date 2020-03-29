@@ -16,13 +16,13 @@ interface IState {
 }
 
 enum SidePanelOption {
-  Home = 'Home',
-  Service = 'Generate Service',
-  ScreenStore = 'Generate Screen Store',
+  Configs = 'Add Server Configs',
   DomainStore = 'Generate Domain Store',
   Feature = 'Generate Feature',
+  Home = 'Home',
   Optimizations = 'Add EOS Optimizations',
-  Configs = 'Add Server Configs',
+  ScreenStore = 'Generate Screen Store',
+  Service = 'Generate Service',
 }
 
 export class App extends React.Component<{}, IState> {

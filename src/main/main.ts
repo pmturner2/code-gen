@@ -8,10 +8,10 @@ function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 600,
-    width: 800,
     webPreferences: {
       nodeIntegration: true,
     },
+    width: 800,
   });
 
   // and load the index.html of the app.
@@ -20,7 +20,7 @@ function createWindow() {
       pathname: path.join(__dirname, './index.html'),
       protocol: 'file:',
       slashes: true,
-    })
+    }),
   );
 
   // Open the DevTools.

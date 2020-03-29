@@ -33,8 +33,8 @@ export async function updateAppTypes(serviceIdentifier: string): Promise<() => v
   ]);
   const [enumName, serviceName] = serviceIdentifier.split('.');
   return addEnumMember({
-    filename: kAppTypesPath,
     enumName,
+    filename: kAppTypesPath,
     newKey: serviceName,
     newValue: `${categoryMapping.get(enumName)}.${serviceName}`,
     sortEnum: true,
@@ -304,7 +304,7 @@ async function internalGenerateInjectableClass(
   const submissionProgress: IProgressStep[] = [];
 
   try {
-    const finalizeFunctions = new Array<() => void>();
+    const finalizeFunctions: Array<() => void> = [];
     submissionProgress.push({
       description: `Adding ${item.serviceIdentifier} to App Types`,
       execute: async () => {
@@ -329,7 +329,7 @@ async function internalGenerateInjectableClass(
     });
 
     submissionProgress.push({
-      description: `Copying and finalizing output`,
+      description: 'Copying and finalizing output',
       execute: async () => {
         for (const f of finalizeFunctions) {
           await f();

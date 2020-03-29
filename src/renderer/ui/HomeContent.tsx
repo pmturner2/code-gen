@@ -7,6 +7,6 @@ interface IProps {
 /**
  * Home screen content for the main panel when no options selected in side bar.
  */
-export const HomeContent: React.FunctionComponent<IProps> = props => {
+export const HomeContent: React.FunctionComponent<IProps> = () => {
   return <div />;
 };

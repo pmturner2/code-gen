@@ -80,14 +80,14 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
   const [submissionProgress, setSubmissionProgress] = React.useState([]);
   const dialogCoordinator = React.useContext(DialogCoordinatorContext);
 
-  function getSelectedDependencies(category: InjectableCategory): string[] {
-    const availableForCategory = availableDependencies.get(category);
+  function getSelectedDependencies(injectableCategory: InjectableCategory): string[] {
+    const availableForCategory = availableDependencies.get(injectableCategory);
     return dependencies.filter(dep => availableForCategory.get(dep));
   }
 
-  function validateFormItem(name: string, value: string) {
-    if (!value) {
-      dialogCoordinator.showError('Required param missing: ' + name);
+  function validateFormItem(itemName: string, itemValue: string) {
+    if (!itemValue) {
+      dialogCoordinator.showError('Required param missing: ' + itemName);
       return false;
     }
     return true;
@@ -112,15 +112,15 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
       if (forceAddDependencies) {
         const forcedDependencies = forceAddDependencies();
         for (const dep of forcedDependencies) {
-          if (dependencies.indexOf(dep) == -1) {
+          if (dependencies.indexOf(dep) === -1) {
             dependencies.push(dep);
           }
         }
       }
-      const selectedDependencies = dependencies.map(serviceIdentifier => {
-        for (const category of props.dependencyCategories) {
-          const depsForCategory = availableDependencies.get(category);
-          const result = depsForCategory.get(serviceIdentifier);
+      const selectedDependencies = dependencies.map(selectedServiceIdentifier => {
+        for (const dependencyCategory of props.dependencyCategories) {
+          const depsForCategory = availableDependencies.get(dependencyCategory);
+          const result = depsForCategory.get(selectedServiceIdentifier);
           if (result) {
             return result;
           }
@@ -153,34 +153,32 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
   };
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    if (name === 'Name') {
+    if (event.target?.name === 'Name') {
       if (!hasEditedPath) {
-        setPath(value.toLowerCase());
+        setPath(event.target?.value?.toLowerCase());
       }
-      setName(uppercaseFirstLetter(value));
-    } else if (name === 'Path') {
-      setPath(value.toLowerCase());
+      setName(uppercaseFirstLetter(event.target?.value));
+    } else if (event.target?.name === 'Path') {
+      setPath(event.target?.value?.toLowerCase());
       setHasEditedPath(true);
     }
   };
 
-  const fetchAvailableDependencies = async () => {
-    const availableDependencies = new Map<string, Map<string, IInjectable>>();
-    for (const category of props.dependencyCategories) {
-      const dependenciesForCategory = new Map<string, IInjectable>();
-      const injectables = await getAvailableInjectables(category);
-      injectables.forEach(injectable => {
-        dependenciesForCategory.set(injectable.serviceIdentifier, injectable);
-      });
-      availableDependencies.set(category, dependenciesForCategory);
-    }
-    setAvailableDependencies(cloneMap(availableDependencies));
-  };
-
   React.useEffect(() => {
+    const fetchAvailableDependencies = async () => {
+      const availableDeps = new Map<string, Map<string, IInjectable>>();
+      for (const dependencyCategory of props.dependencyCategories) {
+        const dependenciesForCategory = new Map<string, IInjectable>();
+        const injectables = await getAvailableInjectables(dependencyCategory);
+        injectables.forEach(injectable => {
+          dependenciesForCategory.set(injectable.serviceIdentifier, injectable);
+        });
+        availableDeps.set(dependencyCategory, dependenciesForCategory);
+      }
+      setAvailableDependencies(cloneMap(availableDeps));
+    };
     fetchAvailableDependencies();
-  }, []);
+  }, [props.dependencyCategories]);
 
   if (!availableDependencies) {
     return null;
@@ -208,13 +206,13 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
           />
         </FormSection>
         <FormSection title="Dependencies">
-          {props.dependencyCategories.map(category => {
-            const items = Array.from(availableDependencies.get(category).values());
+          {props.dependencyCategories.map(dependencyCategory => {
+            const items = Array.from(availableDependencies.get(dependencyCategory).values());
 
             return (
               <DependencySelector
                 category={category}
-                selectedItems={getSelectedDependencies(category)}
+                selectedItems={getSelectedDependencies(dependencyCategory)}
                 items={items}
                 onChange={handleDependencyChange}
                 key={category}

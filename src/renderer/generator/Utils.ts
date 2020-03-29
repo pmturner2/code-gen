@@ -143,9 +143,9 @@ export function separateCommentsFromLines(str: string): ILineWithComments[] {
     } else {
       const endOfLineIndex = line.indexOf('//');
       result.push({
-        line, // includes commentEnd
         commentBefore: commentBefore.length !== 0 ? commentBefore.join('\n') : undefined,
         commentEnd: endOfLineIndex !== -1 ? line.substr(endOfLineIndex) : undefined,
+        line, // includes commentEnd
       });
       commentBefore = [];
     }
@@ -265,12 +265,12 @@ export function cloneSet<V>(set: Set<V>): Set<V> {
 
 export function prettierFormat(text: string, parser: 'json' | 'typescript' = 'typescript'): string {
   return prettier.format(text, {
-    semi: true,
-    trailingComma: 'all',
-    singleQuote: true,
     parser,
     printWidth: 100,
+    semi: true,
+    singleQuote: true,
     tabWidth: 2,
+    trailingComma: 'all',
   });
 }
 

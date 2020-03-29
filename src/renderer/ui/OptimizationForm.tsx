@@ -40,11 +40,11 @@ export const OptimizationForm: React.FunctionComponent<IProps> = props => {
     }
     props.onChange({
       fetchOnWarmLaunch,
-      name,
       key,
+      name,
       variables: variablesJson,
     });
-  }, [name, key, fetchOnWarmLaunch, variablesJson]);
+  }, [name, key, fetchOnWarmLaunch, variablesJson, hasEditedKey, props]);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);

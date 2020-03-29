@@ -29,8 +29,8 @@ const kDrawerWidth = 240;
 const useStyles = makeStyles((theme?: Theme) =>
   createStyles({
     drawer: {
-      width: kDrawerWidth,
       flexShrink: 0,
+      width: kDrawerWidth,
     },
     drawerPaper: {
       width: kDrawerWidth,

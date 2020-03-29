@@ -23,26 +23,26 @@ export interface INewService extends INewInjectable {
 }
 
 export enum HttpRequestVerb {
-  Get = 'GET',
-  Put = 'PUT',
-  Post = 'POST',
   Delete = 'DELETE',
+  Get = 'GET',
+  Post = 'POST',
+  Put = 'PUT',
 }
 
 export enum ZsrRequestService {
-  Gwf = 'gwf',
-  NetworkAccount = 'networkaccount',
   Conversation = 'conversation',
+  Gwf = 'gwf',
   Leaderboards = 'leaderboards',
   Log = 'log',
+  NetworkAccount = 'networkaccount',
   Optimize = 'optimize',
   Track = 'track',
 }
 
 export enum RetryPolicy {
+  Exponential = 'Exponential',
   None = 'None',
   Once = 'Once',
-  Exponential = 'Exponential',
 }
 
 export interface IZsrRequest {

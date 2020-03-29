@@ -14,6 +14,26 @@ interface IProps {
   onChange: (request: IZsrRequest) => void;
 }
 
+function getPrefix(verb: HttpRequestVerb): string {
+  return verb === HttpRequestVerb.Get ? 'fetch' : verb.toLowerCase();
+}
+
+function buildDefaultFunctionName(verb: HttpRequestVerb, service: string, method: string) {
+  return `${getPrefix(verb)}${uppercaseFirstLetter(service)}${uppercaseFirstLetter(method)}`;
+}
+
+function buildRequestObjectName(verb: HttpRequestVerb, service: string, method: string) {
+  return `I${uppercaseFirstLetter(getPrefix(verb))}${uppercaseFirstLetter(
+    service,
+  )}${uppercaseFirstLetter(method)}Request`;
+}
+
+function buildResponseObjectName(verb: HttpRequestVerb, service: string, method: string) {
+  return `I${uppercaseFirstLetter(getPrefix(verb))}${uppercaseFirstLetter(
+    service,
+  )}${uppercaseFirstLetter(method)}Response`;
+}
+
 /**
  * Form for generating Service, DomainStore, or ScreenStore classes
  */
@@ -31,56 +51,36 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
   const [requestJson, setRequestJson] = React.useState('{}');
   const [responseJson, setResponseJson] = React.useState('{}');
 
-  function getPrefix(verb: HttpRequestVerb): string {
-    return verb === HttpRequestVerb.Get ? 'fetch' : verb.toLowerCase();
-  }
-
-  function buildDefaultFunctionName() {
-    return `${getPrefix(verb)}${uppercaseFirstLetter(service)}${uppercaseFirstLetter(method)}`;
-  }
-
-  function buildRequestObjectName() {
-    return `I${uppercaseFirstLetter(getPrefix(verb))}${uppercaseFirstLetter(
-      service,
-    )}${uppercaseFirstLetter(method)}Request`;
-  }
-
-  function buildResponseObjectName() {
-    return `I${uppercaseFirstLetter(getPrefix(verb))}${uppercaseFirstLetter(
-      service,
-    )}${uppercaseFirstLetter(method)}Response`;
-  }
-
   useEffect(() => {
     if (!hasEditedFunctionName) {
-      const newFunctionName = buildDefaultFunctionName();
+      const newFunctionName = buildDefaultFunctionName(verb, service, method);
       if (newFunctionName !== functionName) {
         setFunctionName(newFunctionName);
       }
     }
     if (!hasEditedRequestObjectName) {
-      const newRequestObjectName = buildRequestObjectName();
+      const newRequestObjectName = buildRequestObjectName(verb, service, method);
       if (newRequestObjectName !== requestObjectName) {
         setRequestObjectName(newRequestObjectName);
       }
     }
     if (!hasEditedResponseObjectName) {
-      const newResponseObjectName = buildResponseObjectName();
+      const newResponseObjectName = buildResponseObjectName(verb, service, method);
       if (newResponseObjectName !== responseObjectName) {
         setResponseObjectName(newResponseObjectName);
       }
     }
 
     props.onChange({
-      verb,
-      service,
-      method,
-      retryPolicy,
-      requestObjectInterfaceName: requestObjectName,
-      responseObjectInterfaceName: responseObjectName,
       functionName,
+      method,
       requestJson,
+      requestObjectInterfaceName: requestObjectName,
       responseJson,
+      responseObjectInterfaceName: responseObjectName,
+      retryPolicy,
+      service,
+      verb,
     });
   }, [
     method,
@@ -92,6 +92,10 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
     responseObjectName,
     requestJson,
     responseJson,
+    hasEditedFunctionName,
+    hasEditedRequestObjectName,
+    hasEditedResponseObjectName,
+    props,
   ]);
 
   const handleHttpVerbChange = (event: React.ChangeEvent<{ value: unknown }>) => {

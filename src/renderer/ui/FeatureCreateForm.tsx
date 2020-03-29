@@ -100,10 +100,10 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
       // });
 
       await generateFeature({
-        name: generateCapitalizedCamelCaseName(name),
-        optimizations,
         configs,
+        name: generateCapitalizedCamelCaseName(name),
         onProgress: onSubmissionProgress,
+        optimizations,
       });
     } catch (error) {
       dialogCoordinator.showError(error.message ? error.message : error);
@@ -128,11 +128,11 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
   return (
     <React.Fragment>
       <form onSubmit={handleSubmit} className="main-content">
-        <FormSection title={`Generate Feature`}>
+        <FormSection title={'Generate Feature'}>
           <TextInput
             label="Feature Name"
             name="Name"
-            placeholder={`e.g. WordRadar`}
+            placeholder={'e.g. WordRadar'}
             onChange={handleTextChange}
             value={name}
             required={true}
@@ -151,7 +151,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Config"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormAddMultipleSection
@@ -159,7 +159,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Api Call"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormAddMultipleSection
@@ -167,7 +167,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Tracking Call"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormAddMultipleSection
@@ -175,7 +175,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Screen"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormAddMultipleSection
@@ -183,7 +183,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Cell"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormAddMultipleSection
@@ -191,7 +191,7 @@ export const FeatureCreateForm: React.FunctionComponent<IProps> = props => {
           elementName="Popup"
           onChange={handleConfigsChange}
           elementCreateForm={ServerConfigForm}
-          defaultElement={{ name: '', defaultValue: '{}' }}
+          defaultElement={{ defaultValue: '{}', name: '' }}
         />
         <Divider />
         <FormSection>

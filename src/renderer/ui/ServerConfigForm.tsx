@@ -17,10 +17,10 @@ export const ServerConfigForm: React.FunctionComponent<IProps> = props => {
 
   useEffect(() => {
     props.onChange({
-      name,
       defaultValue,
+      name,
     });
-  }, [name, defaultValue]);
+  }, [name, defaultValue, props]);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);

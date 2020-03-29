@@ -5,20 +5,20 @@ import { addClassMember, addObjectMember } from './TypescriptUtils';
 
 export async function updateConfig(config: IServerConfig): Promise<() => void> {
   return addClassMember({
-    filename: kConfigModelPath,
     className: 'ConfigModel',
+    decorators: ['serializable', 'observable'],
+    filename: kConfigModelPath,
     newKey: config.name,
     newValue: JSON.parse(config.defaultValue),
-    decorators: ['serializable', 'observable'],
   });
 }
 
 export async function updateConfigDefaults(config: IServerConfig): Promise<() => void> {
   return addObjectMember({
     filename: kConfigDefaultsPath,
-    objectName: 'ConfigDefaults',
     newKey: config.name,
     newValue: JSON.parse(config.defaultValue),
+    objectName: 'ConfigDefaults',
   });
 }
 
@@ -33,11 +33,11 @@ export async function addConfigs(params: {
 }): Promise<void> {
   const submissionProgress: IProgressStep[] = [];
   try {
-    const finalizeFunctions = new Array<() => void>();
+    const finalizeFunctions: Array<() => void> = [];
 
     if (params.elements && params.elements.length > 0) {
       submissionProgress.push({
-        description: `Updating Server Configs`,
+        description: 'Updating Server Configs',
         execute: async () => {
           for (const element of params.elements) {
             finalizeFunctions.push(await updateConfig(element));
@@ -45,7 +45,7 @@ export async function addConfigs(params: {
         },
       });
       submissionProgress.push({
-        description: `Updating Server Config Defaults`,
+        description: 'Updating Server Config Defaults',
         execute: async () => {
           for (const element of params.elements) {
             finalizeFunctions.push(await updateConfigDefaults(element));
@@ -55,7 +55,7 @@ export async function addConfigs(params: {
     }
 
     submissionProgress.push({
-      description: `Copying and finalizing output`,
+      description: 'Copying and finalizing output',
       execute: async () => {
         for (const f of finalizeFunctions) {
           await f();

@@ -34,7 +34,7 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
   };
 
   const submit = async (
-    request: INewInjectable,
+    newInjectable: INewInjectable,
     _: InjectableCategory,
     onSubmissionProgress: (progress: IProgressStep[]) => void,
   ) => {
@@ -56,10 +56,10 @@ export const ServiceCreateForm: React.FunctionComponent<IProps> = props => {
 
     await generateService(
       {
-        ...request,
+        ...newInjectable,
         apiFilename:
           zsrRequests.length !== 0
-            ? `${request.name.substr(0, request.name.lastIndexOf('Service'))}Api`
+            ? `${newInjectable.name.substr(0, newInjectable.name.lastIndexOf('Service'))}Api`
             : undefined,
         zsrRequests,
       },

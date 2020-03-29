@@ -18,7 +18,7 @@ export const AddConfigsForm: React.FunctionComponent<IProps> = props => {
       title="Server Configs"
       elementName="Config"
       elementCreateForm={ServerConfigForm}
-      defaultElement={{ name: '', defaultValue: '{}' }}
+      defaultElement={{ defaultValue: '{}', name: '' }}
     />
   );
 };

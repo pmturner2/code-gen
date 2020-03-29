@@ -16,11 +16,11 @@ export async function generateFeature(feature: {
 }): Promise<void> {
   const submissionProgress: IProgressStep[] = [];
   try {
-    const finalizeFunctions = new Array<() => void>();
+    const finalizeFunctions: Array<() => void> = [];
 
     if (feature.optimizations && feature.optimizations.length > 0) {
       submissionProgress.push({
-        description: `Updating Optimizations`,
+        description: 'Updating Optimizations',
         execute: async () => {
           for (const optimization of feature.optimizations) {
             finalizeFunctions.push(await updateOptimization(optimization));
@@ -29,7 +29,7 @@ export async function generateFeature(feature: {
       });
 
       submissionProgress.push({
-        description: `Updating Optimization Defaults`,
+        description: 'Updating Optimization Defaults',
         execute: async () => {
           for (const optimization of feature.optimizations) {
             finalizeFunctions.push(await updateOptimizationDefaults(optimization));
@@ -40,7 +40,7 @@ export async function generateFeature(feature: {
 
     if (feature.configs && feature.configs.length > 0) {
       submissionProgress.push({
-        description: `Updating Server Configs`,
+        description: 'Updating Server Configs',
         execute: async () => {
           for (const config of feature.configs) {
             finalizeFunctions.push(await updateConfig(config));
@@ -49,7 +49,7 @@ export async function generateFeature(feature: {
       });
 
       submissionProgress.push({
-        description: `Updating Server Config Defaults`,
+        description: 'Updating Server Config Defaults',
         execute: async () => {
           for (const config of feature.configs) {
             finalizeFunctions.push(await updateConfigDefaults(config));
@@ -59,7 +59,7 @@ export async function generateFeature(feature: {
     }
 
     submissionProgress.push({
-      description: `Copying and finalizing output`,
+      description: 'Copying and finalizing output',
       execute: async () => {
         for (const f of finalizeFunctions) {
           await f();

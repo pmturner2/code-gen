@@ -22,7 +22,7 @@ export function FormAddMultipleSection<T>(props: IProps<T>) {
 
   useEffect(() => {
     onChange(Array.from(elements.values()));
-  }, [elements]);
+  }, [elements, onChange]);
 
   const handleAddElement = () => {
     const key = nextKey.current.toString();

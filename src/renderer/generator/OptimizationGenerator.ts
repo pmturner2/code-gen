@@ -9,8 +9,8 @@ export async function updateOptimization(optimization: IOptimization): Promise<(
     ? 'WarmLaunchOptimizations'
     : 'ColdLaunchOptimizations';
   return addEnumMember({
-    filename: kOptimizationsPath,
     enumName,
+    filename: kOptimizationsPath,
     newKey: optimization.key,
     newValue: optimization.name,
     sortEnum: true,
@@ -35,11 +35,11 @@ export async function addOptimizations(params: {
 }): Promise<void> {
   const submissionProgress: IProgressStep[] = [];
   try {
-    const finalizeFunctions = new Array<() => void>();
+    const finalizeFunctions: Array<() => void> = [];
 
     if (params.elements && params.elements.length > 0) {
       submissionProgress.push({
-        description: `Updating Optimizations`,
+        description: 'Updating Optimizations',
         execute: async () => {
           for (const element of params.elements) {
             finalizeFunctions.push(await updateOptimization(element));
@@ -47,7 +47,7 @@ export async function addOptimizations(params: {
         },
       });
       submissionProgress.push({
-        description: `Updating Optimization Defaults`,
+        description: 'Updating Optimization Defaults',
         execute: async () => {
           for (const element of params.elements) {
             finalizeFunctions.push(await updateOptimizationDefaults(element));
@@ -57,7 +57,7 @@ export async function addOptimizations(params: {
     }
 
     submissionProgress.push({
-      description: `Copying and finalizing output`,
+      description: 'Copying and finalizing output',
       execute: async () => {
         for (const f of finalizeFunctions) {
           await f();

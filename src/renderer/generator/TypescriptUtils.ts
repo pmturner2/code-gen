@@ -59,7 +59,7 @@ function generateInternalInterface(
      interface ${interfaceName} {      
      `;
   result += addNodeToInterface(jsonObject, null, interfaceMap);
-  result += `}`;
+  result += '}';
   return result;
 }
 
@@ -74,7 +74,7 @@ export function generateInterfaceFromJson(
      export interface ${interfaceName} {      
      `;
   result += addNodeToInterface(jsonObject, null, interfaceMap);
-  result += `}`;
+  result += '}';
   interfaceMap.forEach(interfaceDefinition => {
     result += interfaceDefinition;
   });
