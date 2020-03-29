@@ -11,5 +11,6 @@ module.exports = {
     'sort-keys-fix/sort-keys-fix': 'error',
     'typescript-sort-keys/string-enum': 2,
     'react/no-this-in-sfc': 2,
+    'react-hooks/exhaustive-deps': 0,
   },
 };

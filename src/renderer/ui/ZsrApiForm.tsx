@@ -95,7 +95,6 @@ export const ZsrApiForm: React.FunctionComponent<IProps> = props => {
     hasEditedFunctionName,
     hasEditedRequestObjectName,
     hasEditedResponseObjectName,
-    props,
   ]);
 
   const handleHttpVerbChange = (event: React.ChangeEvent<{ value: unknown }>) => {

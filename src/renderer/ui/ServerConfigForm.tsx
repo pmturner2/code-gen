@@ -20,7 +20,7 @@ export const ServerConfigForm: React.FunctionComponent<IProps> = props => {
       defaultValue,
       name,
     });
-  }, [name, defaultValue, props]);
+  }, [name, defaultValue]);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
