@@ -1,3 +1,13 @@
+const devConfig = require('../../dev-config-defaults.json');
+try {
+  const devConfigOverrides = require('../../dev-config.json');
+  if (devConfigOverrides) {
+    Object.assign(devConfig, devConfigOverrides);
+  }
+} catch {
+  // No config, so we'll use defaults.
+}
+
 /**
  * Used for temporary scratch space
  */
@@ -6,7 +16,7 @@ export const kTmpFolder = './.TMP';
 /**
  * Path to `wf-react` root, relative to the `code-gen` root
  */
-export const kWfReactFolder = '../..';
+export const kWfReactFolder = devConfig.root;
 
 /**
  * Path to `wf-react` src, relative to the `code-gen` root
@@ -16,7 +26,6 @@ export const kWfReactSrcFolder = `${kWfReactFolder}/src`;
 /**
  * File used as a template for new `Service` classes
  */
-
 export const kServiceTemplateFile = 'templates/file/Service._ts';
 export const kDomainStoreTemplateFile = 'templates/file/DomainStore._ts';
 export const kScreenStoreTemplateFile = 'templates/file/ScreenStore._ts';
