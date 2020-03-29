@@ -64,7 +64,7 @@ export class App extends React.Component<{}, IState> {
         ],
       },
       {
-        options: [this.createSidePanelOption(SidePanelOption.Feature)],
+        options: [this.createSidePanelOption(SidePanelOption.Feature, true)],
       },
       {
         options: [
@@ -75,13 +75,17 @@ export class App extends React.Component<{}, IState> {
     ];
   }
 
-  private createSidePanelOption(title: SidePanelOption): ISidePanelOption {
+  private createSidePanelOption(
+    title: SidePanelOption,
+    workInProgress?: boolean,
+  ): ISidePanelOption {
     return {
       id: title,
       onClick: () => {
         this.navigateTo(title);
       },
       title,
+      workInProgress,
     };
   }
 

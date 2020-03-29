@@ -8,6 +8,7 @@ import {
   makeStyles,
   Theme,
 } from '@material-ui/core';
+import ThumbDownIcon from '@material-ui/icons/ThumbDown';
 import React from 'react';
 
 export interface ISidePanelSection {
@@ -18,6 +19,7 @@ export interface ISidePanelOption {
   id: string;
   title: string;
   onClick: () => void;
+  workInProgress?: boolean;
 }
 
 interface IProps {
@@ -59,6 +61,7 @@ export const SidePanel: React.FunctionComponent<IProps> = props => {
             {section.options.map(option => (
               <ListItem button key={option.title} onClick={option.onClick}>
                 <ListItemText primary={option.title} />
+                {option.workInProgress && <ThumbDownIcon color="disabled" />}
               </ListItem>
             ))}
           </List>
