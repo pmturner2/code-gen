@@ -10,11 +10,22 @@ interface IProps {
   onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
+function getSelectorTitle(category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return 'Service Dependencies';
+    case 'DomainStore':
+      return 'Domain Store Dependencies';
+    case 'ScreenStore':
+      return 'UI Store Dependencies';
+  }
+}
+
 export const DependencySelector: React.FunctionComponent<IProps> = props => {
   const { category, items, selectedItems, onChange } = props;
   return (
     <MultiSelector
-      title={`${category} Dependencies`}
+      title={getSelectorTitle(category)}
       items={items.map(item => item.serviceIdentifier)}
       selectedItems={selectedItems}
       id={`${category}-dependencies`}

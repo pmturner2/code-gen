@@ -39,8 +39,9 @@ function getInterfaceName(name: string, category: InjectableCategory) {
     case 'Service':
       return `I${name}Service`;
     case 'DomainStore':
-    case 'ScreenStore':
       return `I${name}Store`;
+    case 'ScreenStore':
+      return `I${name}UIStore`;
   }
 }
 
@@ -49,8 +50,9 @@ function getClassName(name: string, category: InjectableCategory) {
     case 'Service':
       return `${name}Service`;
     case 'DomainStore':
-    case 'ScreenStore':
       return `${name}Store`;
+    case 'ScreenStore':
+      return `${name}UIStore`;
   }
 }
 
@@ -62,6 +64,39 @@ function getServiceIdentifier(name: string, category: InjectableCategory) {
       return `DomainStoreTypes.${name}`;
     case 'ScreenStore':
       return `ScreenStoreTypes.${name}`;
+  }
+}
+
+function getFormTitle(category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return 'Generate Service';
+    case 'DomainStore':
+      return 'Generate Domain Store';
+    case 'ScreenStore':
+      return 'Generate UI Store';
+  }
+}
+
+function getNamePlaceholder(category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return 'e.g. Game for GameService';
+    case 'DomainStore':
+      return 'e.g. Game for GameStore';
+    case 'ScreenStore':
+      return 'e.g. Game for GameUIStore';
+  }
+}
+
+function getPathPlaceholder(category: InjectableCategory) {
+  switch (category) {
+    case 'Service':
+      return 'e.g. game for src/services/game';
+    case 'DomainStore':
+      return 'e.g. game for src/domains/game';
+    case 'ScreenStore':
+      return 'e.g. game for src/screens/game';
   }
 }
 
@@ -193,11 +228,11 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
   return (
     <React.Fragment>
       <form onSubmit={handleSubmit} className="main-content">
-        <FormSection title={`Generate ${category}`}>
+        <FormSection title={getFormTitle(category)}>
           <TextInput
             label="Name"
             name="Name"
-            placeholder={`e.g. Game for Game${category}`}
+            placeholder={getNamePlaceholder(category)}
             onChange={handleTextChange}
             value={name}
             required={true}
@@ -205,7 +240,7 @@ export const InjectableCreateForm: React.FunctionComponent<IProps> = props => {
           <TextInput
             label="Path"
             name="Path"
-            placeholder="e.g. game for src/services/game"
+            placeholder={getPathPlaceholder(category)}
             onChange={handleTextChange}
             value={path}
             required={true}

@@ -21,7 +21,7 @@ enum SidePanelOption {
   Feature = 'Generate Feature',
   Home = 'Home',
   Optimizations = 'Add EOS Optimizations',
-  ScreenStore = 'Generate Screen Store',
+  ScreenStore = 'Generate UI Store',
   Service = 'Generate Service',
 }
 
